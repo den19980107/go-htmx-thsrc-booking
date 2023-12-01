@@ -1,0 +1,25 @@
+{{define "content"}}
+<form method="post" hx-boost="true" hx-push-url="true" action='{{call .ToURL "login.post"}}'>
+    {{template "messages" .}}
+    <div class="field">
+        <label for="email" class="label">Email address</label>
+        <div class="control">
+            <input id="email" type="email" name="email" placeholder="Please insert your email"
+                class="input input-bordered w-full" value="{{ .Form.Email}}" hx-target="next .error" />
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "Email")}}
+        </div>
+    </div>
+    <div class="field mb-4">
+        <label for="password" class="label">Password</label>
+        <div class="control">
+            <input id="password" type="password" name="password" placeholder="Please insert your password"
+                class="input input-bordered w-full" hx-target="next .error" />
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "Password")}}
+        </div>
+    </div>
+    <div class="flex justify-end mb-4">
+        <button class="btn btn-primary">Log in</button>
+    </div>
+    {{template "csrf" .}}
+</form>
+{{end}}

@@ -1,0 +1,80 @@
+{{define "content"}}
+<div class="mb-10">
+    <form class="mb-3" method="post" hx-boost="true" action='{{call .ToURL "order.post"}}'>
+        <div class="mb-3">
+            <label class="label">
+                <span class="label-text">Departure Station</span>
+            </label>
+            <select class="select select-bordered w-full" name="departure-station" hx-target="next .error"
+                hx-push-url="false" value="{{.Form.DepartureStation}}">
+                {{$departureStation := .Form.DepartureStation}}
+                <option value="" {{if eq $departureStation "" }} selected {{end}} disabled>Please select</option>
+                {{range $station := .Data.StationList}}
+                <option value="{{$station}}" {{if eq $departureStation $station}} selected {{end}}>
+                    {{$station}}
+                </option>
+                {{end}}
+            </select>
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "DepartureStation")}}
+        </div>
+        <div class="mb-3">
+            <label class="label">
+                <span class="label-text">Arrival Station</span>
+            </label>
+            <select class="select select-bordered w-full" name="arrival-station" hx-target="next .error"
+                hx-push-url="false">
+                {{$arrivalStation := .Form.ArrivalStation}}
+                <option value="" {{if eq $arrivalStation "" }} selected {{end}} disabled>Please select</option>
+                {{range $station := .Data.StationList}}
+                <option value="{{$station}}" {{if eq $arrivalStation $station}} selected {{end}}>
+                    {{$station}}
+                </option>
+                {{end}}
+            </select>
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "ArrivalStation")}}
+        </div>
+        <div class="mb-3">
+            <label class="label">
+                <span class="label-text">Earliest Departure Time</span>
+            </label>
+            <input type="datetime-local" class="input input-bordered w-full" name="start-time"
+                value="{{ .Form.StartTime }}" hx-target="next .error" />
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "StartTime")}}
+        </div>
+        <div class="mb-3">
+            <label class="label">
+                <span class="label-text">Latest Departure Time</span>
+            </label>
+            <input type="datetime-local" class="input input-bordered w-full" name="end-time" value="{{ .Form.EndTime }}"
+                hx-target="next .error" />
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "EndTime")}}
+        </div>
+        <div class="mb-3">
+            <label class="label">
+                <span class="label-text">ID</span>
+            </label>
+            <input class="input input-bordered w-full" name="id-number" value="{{ .Form.IdNumber }}"
+                hx-target="next .error" />
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "ID")}}
+        </div>
+        <div class="mb-3">
+            <label class="label">
+                <span class="label-text">Phone Number</span>
+            </label>
+            <input class="input input-bordered w-full" name="phone-number" value="{{ .Form.PhoneNumber }}"
+                hx-target="next .error" />
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "PhoneNumber")}}
+        </div>
+        <div class="mb-3">
+            <label class="label">
+                <span class="label-text">Email</span>
+            </label>
+            <input class="input input-bordered w-full" name="email" value="{{ .Form.Email }}" hx-target="next .error" />
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "Email")}}
+        </div>
+        <div class="flex justify-end">
+            <button class="btn btn-primary">Booking!</button>
+        </div>
+    </form>
+</div>
+{{ end }}

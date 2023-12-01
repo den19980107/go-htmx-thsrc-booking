@@ -1,0 +1,12 @@
+{{define "content"}}
+{{if ge .StatusCode 500}}
+<p>Please try again.</p>
+{{else if or (eq .StatusCode 403) (eq .StatusCode 401)}}
+<p>You are not authorized to view the requested page.</p>
+<a class="link" href='{{call .ToURL "login"}}'>Click here to login</a>
+{{else if eq .StatusCode 404}}
+<a class="link" href='{{call .ToURL "home"}}'>Click here to return home</a>
+{{else}}
+<p>Something went wrong</p>
+{{end}}
+{{end}}

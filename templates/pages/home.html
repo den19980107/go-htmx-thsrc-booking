@@ -1,0 +1,59 @@
+{{define "content"}}
+{{- if not (eq .HTMX.Request.Target "posts")}}
+{{template "top-content" .}}
+{{- end}}
+
+{{template "posts" .}}
+
+{{- if not (eq .HTMX.Request.Target "posts")}}
+{{template "file-msg" .}}
+{{- end}}
+{{end}}
+
+{{define "top-content"}}
+<section class="section mb-4">
+    <h1 class="text-2xl">Recent orders</h1>
+    <h2 class="subtitle">
+        your recent orders will list below
+    </h2>
+</section>
+{{end}}
+
+{{define "posts"}}
+<div id="posts">
+    {{- range .Data}}
+    {{ template "order" .}}
+    {{- end}}
+
+    <div class="field is-grouped is-grouped-centered">
+        {{- if not $.Pager.IsBeginning}}
+        <p class="control">
+            <button class="button is-primary" hx-swap="outerHTML" hx-get="/?page={{sub $.Pager.Page 1}}"
+                hx-target="#posts">Previous page</button>
+        </p>
+        {{- end}}
+        {{- if not $.Pager.IsEnd}}
+        <p class="control">
+            <button class="button is-primary" hx-swap="outerHTML" hx-get="/?page={{add $.Pager.Page 1}}"
+                hx-target="#posts">Next page</button>
+        </p>
+        {{- end}}
+    </div>
+</div>
+{{end}}
+
+{{define "file-msg"}}
+<!-- <div class="block"></div> -->
+<!-- <article class="message is-small is-warning" x-data="{show: true}" x-show="show"> -->
+<!--     <div class="message-header"> -->
+<!--         <p>Serving files</p> -->
+<!--         <button class="delete is-small" aria-label="delete" @click="show = false"></button> -->
+<!--     </div> -->
+<!--     <div class="message-body"> -->
+<!--         In the example posts above, check how the file URL contains a cache-buster query parameter which changes only -->
+<!--         when the app is restarted. -->
+<!--         Static files also contain cache-control headers which are configured via middleware. -->
+<!--         You can also use AlpineJS to dismiss this message. -->
+<!--     </div> -->
+<!-- </article> -->
+{{end}}

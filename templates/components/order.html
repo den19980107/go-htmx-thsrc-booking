@@ -1,0 +1,11 @@
+{{ block "order" .}}
+<div class="card mb-4 shadow-xl bg-neutral text-neutral-content">
+    <div class="card-body">
+        <h2 class="card-title">{{ .StartTime }}</h2>
+        <p>Departure Station：{{ .DepartureStation }}</p>
+        <p>Arrival Station：{{ .ArrivalStation }}</p>
+        <p>Earliest Departure Time：{{ .StartTime }}</p>
+        <p>Latest Departure Time：{{ .EndTime }}</p>
+    </div>
+</div>
+{{ end }}
