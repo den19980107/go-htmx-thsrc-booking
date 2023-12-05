@@ -7,6 +7,7 @@
         <div class="card-actions justify-between">
             {{- if eq .Status "pending"}}
             <div class="badge badge-info my-auto">{{ .Status }}</div>
+            <button class="btn btn-error" hx-delete="/order/{{ .Id }}" hx-boost="true">Delete</button>
             {{end}}
             {{- if eq .Status "waiting"}}
             <div class="badge badge-warning my-auto">{{ .Status }}</div>
@@ -17,7 +18,6 @@
             {{- if eq .Status "failed"}}
             <div class="badge badge-error my-auto">{{ .Status }}</div>
             {{end}}
-            <button class="btn btn-error" hx-delete="/order/{{ .Id }}" hx-boost="true">Delete</button>
         </div>
     </div>
 </div>
