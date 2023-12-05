@@ -3,11 +3,16 @@ package routes
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/mikestefanello/pagoda/ent/order"
+	"github.com/mikestefanello/pagoda/ent/ordervalidation"
 	"github.com/mikestefanello/pagoda/pkg/context"
 	"github.com/mikestefanello/pagoda/pkg/controller"
+	"github.com/mikestefanello/pagoda/pkg/htmx"
+	"github.com/mikestefanello/pagoda/pkg/models"
 	"github.com/mikestefanello/pagoda/pkg/msg"
 	"github.com/mikestefanello/pagoda/pkg/station"
 )
@@ -30,6 +35,18 @@ type (
 		PhoneNumber      string `form:"phone-number" validate:"required"`
 		Email            string `form:"email" validate:"required,email"`
 		Submission       controller.FormSubmission
+	}
+
+	orderValidationData struct {
+		ImageUrl string
+	}
+
+	orderValidationForm struct {
+		OrderId    int    `form:"order-id" validate:"required"`
+		JsessionId string `form:"jsession-id" validate:"required"`
+		Captcha    string `form:"captcha" validate:"required"`
+		Cookies    string `form:"cookies" validate:"required"`
+		Submission controller.FormSubmission
 	}
 )
 
@@ -62,12 +79,64 @@ func (c *orderController) Get(ctx echo.Context) error {
 	return c.RenderPage(ctx, page)
 }
 
+func (c *orderController) GetValidate(ctx echo.Context) error {
+	validateId, err := strconv.Atoi(ctx.Param("validateId"))
+	if err != nil {
+		return c.Fail(err, "validate id format not correct")
+	}
+
+	currentUser, err := c.Container.Auth.GetAuthenticatedUser(ctx)
+	if err != nil {
+		return c.Redirect(ctx, "login")
+	}
+
+	orderValidation, err := c.Container.ORM.OrderValidation.Query().Where(ordervalidation.ID(validateId)).Only(ctx.Request().Context())
+	if err != nil {
+		return c.Fail(err, "validate id not found")
+	}
+
+	order, err := orderValidation.QueryOrder().Only(ctx.Request().Context())
+	if err != nil {
+		return c.Fail(err, "validate order not found")
+	}
+
+	orderUser, err := order.QueryUser().Only(ctx.Request().Context())
+	if err != nil {
+		return c.Fail(err, "order user not found")
+	}
+
+	if orderUser.ID != currentUser.ID {
+		return c.Fail(err, "order is not belongs to you")
+	}
+
+	page := controller.NewPage(ctx)
+	page.Layout = "main"
+	page.Name = "order-validation"
+	page.Title = "Order validation"
+	page.Data = orderValidationData{
+		ImageUrl: orderValidation.CaptchaImage,
+	}
+	page.Form = orderValidationForm{
+		OrderId:    order.ID,
+		JsessionId: orderValidation.JessionID,
+		Captcha:    "",
+		Cookies:    orderValidation.Cookies,
+		Submission: controller.FormSubmission{},
+	}
+	if form := ctx.Get(context.FormKey); form != nil {
+		page.Form = form.(*orderForm)
+		log.Printf("form: %+v", page.Form)
+	}
+
+	return c.RenderPage(ctx, page)
+}
+
 func (c *orderController) Post(ctx echo.Context) error {
 	var form orderForm
 	ctx.Set(context.FormKey, &form)
 
 	if err := ctx.Bind(&form); err != nil {
-		return c.Fail(err, "unable to parse register form")
+		return c.Fail(err, "unable to parse create order form")
 	}
 
 	if err := form.Submission.Process(ctx, form); err != nil {
@@ -78,12 +147,12 @@ func (c *orderController) Post(ctx echo.Context) error {
 		return c.Get(ctx)
 	}
 
-	startTime, err := time.Parse("2006-01-02T15:04", form.StartTime)
+	startTime, err := time.ParseInLocation("2006-01-02T15:04", form.StartTime, time.Local)
 	if err != nil {
 		form.Submission.SetFieldError("StartTime", "unable to parse start time")
 		return c.Get(ctx)
 	}
-	endTime, err := time.Parse("2006-01-02T15:04", form.EndTime)
+	endTime, err := time.ParseInLocation("2006-01-02T15:04", form.EndTime, time.Local)
 	if err != nil {
 		form.Submission.SetFieldError("EndTime", "unable to parse end time")
 		return c.Get(ctx)
@@ -101,7 +170,7 @@ func (c *orderController) Post(ctx echo.Context) error {
 
 	o, err := c.Container.ORM.Order.
 		Create().
-		SetUserID(user.ID).
+		SetUser(user).
 		SetStartTime(startTime).
 		SetEndTime(endTime).
 		SetEmail(form.Email).
@@ -119,5 +188,74 @@ func (c *orderController) Post(ctx echo.Context) error {
 
 	log.Printf("order from %s to %s at %s is created!", o.DepartureStation, o.ArrivalStation, o.StartTime.Format("2006-01-02 15:04"))
 	msg.Success(ctx, fmt.Sprintf("Order from %s to %s at %s is created!", o.DepartureStation, o.ArrivalStation, o.StartTime.Format("2006-01-02 15:04")))
-	return c.Redirect(ctx, "order")
+	return c.Redirect(ctx, "home")
+}
+
+func (c *orderController) PostValidation(ctx echo.Context) error {
+	var form orderValidationForm
+	ctx.Set(context.FormKey, &form)
+
+	if err := ctx.Bind(&form); err != nil {
+		return c.Fail(err, "unable to parse order validate form")
+	}
+
+	o, err := c.Container.ORM.Order.Query().Where(order.ID(form.OrderId)).Only(ctx.Request().Context())
+	if err != nil {
+		return c.Fail(err, "failed to find order by order id")
+	}
+
+	cw, err := c.Container.CrawlerStore.Get(o.ID)
+	if err != nil {
+		return c.Fail(err, "failed to find the crawler")
+	}
+	defer c.Container.CrawlerStore.Delete(o.ID)
+
+	err = cw.CompleteOrder(*o, form.Captcha, form.JsessionId)
+	if err != nil {
+		return c.Fail(err, "failed to complete order")
+	}
+
+	_, err = o.Update().SetStatus(models.OrderSuccess).Save(ctx.Request().Context())
+	if err != nil {
+		return c.Fail(err, "failed to update order status")
+	}
+
+	log.Printf("complete the order from %s to %s at %s!", o.DepartureStation, o.ArrivalStation, o.StartTime.Format("2006-01-02 15:04"))
+	msg.Success(ctx, fmt.Sprintf("complete the order from %s to %s at %s", o.DepartureStation, o.ArrivalStation, o.StartTime.Format("2006-01-02 15:04")))
+	return c.Redirect(ctx, "home")
+}
+
+func (c *orderController) Delete(ctx echo.Context) error {
+	orderId, err := strconv.Atoi(ctx.Param("orderId"))
+	if err != nil {
+		return c.Fail(err, "order id format not correct")
+	}
+
+	o, err := c.Container.ORM.Order.Query().Where(order.ID(orderId)).Only(ctx.Request().Context())
+	if err != nil {
+		return c.Fail(err, "order not found")
+	}
+
+	orderUser, err := o.QueryUser().Only(ctx.Request().Context())
+	if err != nil {
+		return c.Fail(err, "order have no user")
+	}
+
+	currentUser, err := c.Container.Auth.GetAuthenticatedUser(ctx)
+	if err != nil {
+		return c.Redirect(ctx, "login")
+	}
+
+	if orderUser.ID != currentUser.ID {
+		return c.Fail(err, "this order is not created by you")
+	}
+
+	err = c.Container.ORM.Order.DeleteOneID(orderId).Exec(ctx.Request().Context())
+	if err != nil {
+		return c.Fail(err, "delete order failed")
+	}
+
+	msg.Success(ctx, "order deleted!")
+	htmx.SetBoosted(ctx)
+	return c.Redirect(ctx, "home")
 }

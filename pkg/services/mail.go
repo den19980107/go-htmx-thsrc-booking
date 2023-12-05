@@ -3,10 +3,10 @@ package services
 import (
 	"errors"
 	"fmt"
+	"log"
+	"net/smtp"
 
 	"github.com/mikestefanello/pagoda/config"
-
-	"github.com/labstack/echo/v4"
 )
 
 type (
@@ -56,7 +56,7 @@ func (m *MailClient) skipSend() bool {
 }
 
 // send attempts to send the email
-func (m *MailClient) send(email *mail, ctx echo.Context) error {
+func (m *MailClient) send(email *mail) error {
 	switch {
 	case email.to == "":
 		return errors.New("email cannot be sent without a to address")
@@ -84,11 +84,23 @@ func (m *MailClient) send(email *mail, ctx echo.Context) error {
 
 	// Check if mail sending should be skipped
 	if m.skipSend() {
-		ctx.Logger().Debugf("skipping email sent to: %s", email.to)
+		log.Printf("skipping email sent to: %s", email.to)
 		return nil
 	}
 
-	// TODO: Finish based on your mail sender of choice!
+	msg := "From: " + email.from + "\n" +
+		"To: " + email.to + "\n" +
+		"Subject: " + email.subject + "\n\n" +
+		email.body
+
+	err := smtp.SendMail(fmt.Sprintf("%s:%d", m.config.Mail.Hostname, m.config.Mail.Port),
+		smtp.PlainAuth("", m.config.Mail.FromAddress, m.config.Mail.Password, m.config.Mail.Hostname),
+		m.config.Mail.FromAddress, []string{email.to}, []byte(msg))
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -134,6 +146,6 @@ func (m *mail) TemplateData(data interface{}) *mail {
 }
 
 // Send attempts to send the email
-func (m *mail) Send(ctx echo.Context) error {
-	return m.client.send(m, ctx)
+func (m *mail) Send() error {
+	return m.client.send(m)
 }

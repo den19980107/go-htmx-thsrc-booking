@@ -34,33 +34,33 @@ func GetAllStations() []StationCode {
 	}
 }
 
-// func (s StationCode) String() string {
-// 	switch s {
-// 	case Nangang:
-// 		return "南港"
-// 	case Taipei:
-// 		return "台北"
-// 	case Banqiao:
-// 		return "板橋"
-// 	case Taoyuan:
-// 		return "桃園"
-// 	case Hsinchu:
-// 		return "新竹"
-// 	case Miaoli:
-// 		return "苗栗"
-// 	case Taichung:
-// 		return "台中"
-// 	case Changhua:
-// 		return "彰化"
-// 	case Yunlin:
-// 		return "雲林"
-// 	case Chiayi:
-// 		return "嘉義"
-// 	case Tainan:
-// 		return "台南"
-// 	case Zuouing:
-// 		return "左營"
-// 	default:
-// 		return "未知"
-// 	}
-// }
+func (s StationCode) Code() int {
+	switch s {
+	case Nangang:
+		return 1
+	case Taipei:
+		return 2
+	case Banqiao:
+		return 3
+	case Taoyuan:
+		return 4
+	case Hsinchu:
+		return 5
+	case Miaoli:
+		return 6
+	case Taichung:
+		return 7
+	case Changhua:
+		return 8
+	case Yunlin:
+		return 9
+	case Chiayi:
+		return 10
+	case Tainan:
+		return 11
+	case Zuouing:
+		return 12
+	default:
+		return 0
+	}
+}

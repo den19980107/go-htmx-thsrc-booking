@@ -17,10 +17,16 @@ db-test:
 cache:
 	docker exec -it pagoda_cache redis-cli
 
- # Connect to the test cache
+# Connect to the test cache
 .PHONY: cache-test
 cache-test:
 	docker exec -it pagoda_cache redis-cli -n 1
+
+# Build image and update to docker hub 
+.PHONY: image
+image: 
+	docker build -t den19980107/thsrc-booking-web:latest -f Dockerfile .
+	docker push den19980107/thsrc-booking-web:latest
 
 # Install Ent code-generation module
 .PHONY: ent-install

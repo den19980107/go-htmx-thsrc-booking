@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mikestefanello/pagoda/ent/order"
+	"github.com/mikestefanello/pagoda/ent/ordervalidation"
 	"github.com/mikestefanello/pagoda/ent/user"
 )
 
@@ -63,6 +64,20 @@ func (oc *OrderCreate) SetEmail(s string) *OrderCreate {
 	return oc
 }
 
+// SetStatus sets the "status" field.
+func (oc *OrderCreate) SetStatus(s string) *OrderCreate {
+	oc.mutation.SetStatus(s)
+	return oc
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (oc *OrderCreate) SetNillableStatus(s *string) *OrderCreate {
+	if s != nil {
+		oc.SetStatus(*s)
+	}
+	return oc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (oc *OrderCreate) SetCreatedAt(t time.Time) *OrderCreate {
 	oc.mutation.SetCreatedAt(t)
@@ -86,6 +101,21 @@ func (oc *OrderCreate) SetUserID(id int) *OrderCreate {
 // SetUser sets the "user" edge to the User entity.
 func (oc *OrderCreate) SetUser(u *User) *OrderCreate {
 	return oc.SetUserID(u.ID)
+}
+
+// AddValidationIDs adds the "validation" edge to the OrderValidation entity by IDs.
+func (oc *OrderCreate) AddValidationIDs(ids ...int) *OrderCreate {
+	oc.mutation.AddValidationIDs(ids...)
+	return oc
+}
+
+// AddValidation adds the "validation" edges to the OrderValidation entity.
+func (oc *OrderCreate) AddValidation(o ...*OrderValidation) *OrderCreate {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return oc.AddValidationIDs(ids...)
 }
 
 // Mutation returns the OrderMutation object of the builder.
@@ -123,6 +153,10 @@ func (oc *OrderCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (oc *OrderCreate) defaults() {
+	if _, ok := oc.mutation.Status(); !ok {
+		v := order.DefaultStatus
+		oc.mutation.SetStatus(v)
+	}
 	if _, ok := oc.mutation.CreatedAt(); !ok {
 		v := order.DefaultCreatedAt()
 		oc.mutation.SetCreatedAt(v)
@@ -175,6 +209,14 @@ func (oc *OrderCreate) check() error {
 	if v, ok := oc.mutation.Email(); ok {
 		if err := order.EmailValidator(v); err != nil {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Order.email": %w`, err)}
+		}
+	}
+	if _, ok := oc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Order.status"`)}
+	}
+	if v, ok := oc.mutation.Status(); ok {
+		if err := order.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Order.status": %w`, err)}
 		}
 	}
 	if _, ok := oc.mutation.CreatedAt(); !ok {
@@ -237,6 +279,10 @@ func (oc *OrderCreate) createSpec() (*Order, *sqlgraph.CreateSpec) {
 		_spec.SetField(order.FieldEmail, field.TypeString, value)
 		_node.Email = value
 	}
+	if value, ok := oc.mutation.Status(); ok {
+		_spec.SetField(order.FieldStatus, field.TypeString, value)
+		_node.Status = value
+	}
 	if value, ok := oc.mutation.CreatedAt(); ok {
 		_spec.SetField(order.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -256,6 +302,22 @@ func (oc *OrderCreate) createSpec() (*Order, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.order_user = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.ValidationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   order.ValidationTable,
+			Columns: []string{order.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ordervalidation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

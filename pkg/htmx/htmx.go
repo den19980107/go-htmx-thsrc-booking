@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-//  Headers (https://htmx.org/docs/#requests)
+// Headers (https://htmx.org/docs/#requests)
 const (
 	HeaderRequest            = "HX-Request"
 	HeaderBoosted            = "HX-Boosted"
@@ -54,6 +54,10 @@ func GetRequest(ctx echo.Context) Request {
 		Target:      ctx.Request().Header.Get(HeaderTarget),
 		Prompt:      ctx.Request().Header.Get(HeaderPrompt),
 	}
+}
+
+func SetBoosted(ctx echo.Context) {
+	ctx.Request().Header.Set(HeaderBoosted, "true")
 }
 
 // Apply applies data from a Response to a server response

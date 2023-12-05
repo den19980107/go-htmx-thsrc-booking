@@ -90,7 +90,7 @@ func (c *forgotPassword) Post(ctx echo.Context) error {
 		To(u.Email).
 		Subject("Reset your password").
 		Body(fmt.Sprintf("Go here to reset your password: %s", url)).
-		Send(ctx)
+		Send()
 
 	if err != nil {
 		return c.Fail(err, "error sending password reset email")

@@ -18,6 +18,7 @@ var (
 		{Name: "id_number", Type: field.TypeString},
 		{Name: "phone_number", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString},
+		{Name: "status", Type: field.TypeString, Default: "pending"},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "order_user", Type: field.TypeInt},
 	}
@@ -29,8 +30,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "orders_users_user",
-				Columns:    []*schema.Column{OrdersColumns[9]},
+				Columns:    []*schema.Column{OrdersColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// OrderValidationsColumns holds the columns for the "order_validations" table.
+	OrderValidationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "jession_id", Type: field.TypeString},
+		{Name: "captcha_image", Type: field.TypeString},
+		{Name: "cookies", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "order_validation_order", Type: field.TypeInt},
+	}
+	// OrderValidationsTable holds the schema information for the "order_validations" table.
+	OrderValidationsTable = &schema.Table{
+		Name:       "order_validations",
+		Columns:    OrderValidationsColumns,
+		PrimaryKey: []*schema.Column{OrderValidationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "order_validations_orders_order",
+				Columns:    []*schema.Column{OrderValidationsColumns[5]},
+				RefColumns: []*schema.Column{OrdersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
@@ -74,6 +98,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		OrdersTable,
+		OrderValidationsTable,
 		PasswordTokensTable,
 		UsersTable,
 	}
@@ -81,5 +106,6 @@ var (
 
 func init() {
 	OrdersTable.ForeignKeys[0].RefTable = UsersTable
+	OrderValidationsTable.ForeignKeys[0].RefTable = OrdersTable
 	PasswordTokensTable.ForeignKeys[0].RefTable = UsersTable
 }

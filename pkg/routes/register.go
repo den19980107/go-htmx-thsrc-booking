@@ -111,7 +111,7 @@ func (c *register) sendVerificationEmail(ctx echo.Context, usr *ent.User) {
 		To(usr.Email).
 		Subject("Confirm your email address").
 		Body(fmt.Sprintf("Click here to confirm your email address: %s", url)).
-		Send(ctx)
+		Send()
 
 	if err != nil {
 		ctx.Logger().Errorf("unable to send email verification link: %v", err)

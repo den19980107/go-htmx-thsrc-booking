@@ -54,7 +54,7 @@ func (c *contact) Post(ctx echo.Context) error {
 			To(form.Email).
 			Subject("Contact form submitted").
 			Body(fmt.Sprintf("The message is: %s", form.Message)).
-			Send(ctx)
+			Send()
 
 		if err != nil {
 			return c.Fail(err, "unable to send email")

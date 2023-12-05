@@ -1,0 +1,26 @@
+{{define "content"}}
+<img class="w-full" src="data:image/png;base64, {{.Data.ImageUrl}}"> </img>
+<form class="mb-3" method="post" hx-boost="true" action='{{call .ToURL "order.complete-validate"}}'
+    hx-indicator="#spinner">
+    <div class="mb-3">
+        <label class="label">
+            <span class="label-text">Captcha Code</span>
+        </label>
+        <input class="input input-bordered w-full" name="captcha" value="{{ .Form.Captcha}}" hx-target="next .error" />
+        {{template "field-errors" (.Form.Submission.GetFieldErrors "Captcha")}}
+    </div>
+
+    <input class="invisible" name="jsession-id" value="{{ .Form.JsessionId}}" />
+    <input class="invisible" name="order-id" value="{{ .Form.OrderId}}" />
+    <input class="invisible" name="cookies" value="{{ .Form.Cookies}}" />
+
+    <div class="flex justify-end">
+        <button id="submit-button" class="btn btn-primary">Submit</button>
+    </div>
+</form>
+<script>
+    document.getElementById('submit-button').addEventListener('click', function () {
+        this.innerHTML = '<span class="loading loading-spinner"></span >' + this.innerHTML
+    });
+</script>
+{{end}}

@@ -16,6 +16,7 @@ import (
 
 	"github.com/mikestefanello/pagoda/config"
 	"github.com/mikestefanello/pagoda/ent"
+	"github.com/mikestefanello/pagoda/pkg/crawler"
 
 	// Require by ent
 	_ "github.com/mikestefanello/pagoda/ent/runtime"
@@ -53,6 +54,9 @@ type Container struct {
 
 	// Tasks stores the task client
 	Tasks *TaskClient
+
+	// Crawler Store
+	CrawlerStore *crawler.CrawlerStore
 }
 
 // NewContainer creates and initializes a new Container
@@ -68,6 +72,7 @@ func NewContainer() *Container {
 	c.initTemplateRenderer()
 	c.initMail()
 	c.initTasks()
+	c.initCrawlerStore()
 	return c
 }
 
@@ -198,4 +203,9 @@ func (c *Container) initMail() {
 // initTasks initializes the task client
 func (c *Container) initTasks() {
 	c.Tasks = NewTaskClient(c.Config)
+}
+
+func (c *Container) initCrawlerStore() {
+	store := crawler.InitStore()
+	c.CrawlerStore = &store
 }

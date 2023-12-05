@@ -1,11 +1,24 @@
 {{ block "order" .}}
 <div class="card mb-4 shadow-xl bg-neutral text-neutral-content">
     <div class="card-body">
-        <h2 class="card-title">{{ .StartTime }}</h2>
-        <p>Departure Station：{{ .DepartureStation }}</p>
-        <p>Arrival Station：{{ .ArrivalStation }}</p>
-        <p>Earliest Departure Time：{{ .StartTime }}</p>
-        <p>Latest Departure Time：{{ .EndTime }}</p>
+        <p>{{ .Date}} {{ .StartTime }} ~ {{ .EndTime }}</p>
+        <h2 class="card-title">{{ .DepartureStation }} To {{ .ArrivalStation }}</h2>
+        <p>Ticket info will send to {{ .Email }} </p>
+        <div class="card-actions justify-between">
+            {{- if eq .Status "pending"}}
+            <div class="badge badge-info my-auto">{{ .Status }}</div>
+            {{end}}
+            {{- if eq .Status "waiting"}}
+            <div class="badge badge-warning my-auto">{{ .Status }}</div>
+            {{end}}
+            {{- if eq .Status "success"}}
+            <div class="badge badge-success my-auto">{{ .Status }}</div>
+            {{end}}
+            {{- if eq .Status "failed"}}
+            <div class="badge badge-error my-auto">{{ .Status }}</div>
+            {{end}}
+            <button class="btn btn-error" hx-delete="/order/{{ .Id }}" hx-boost="true">Delete</button>
+        </div>
     </div>
 </div>
 {{ end }}

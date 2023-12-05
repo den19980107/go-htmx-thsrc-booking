@@ -12,8 +12,9 @@ type (
 		controller.Controller
 	}
 
-	order struct {
+	orderData struct {
 		Id               int
+		Date             string
 		StartTime        string
 		EndTime          string
 		DepartureStation station.StationCode
@@ -21,6 +22,7 @@ type (
 		IdNumber         string
 		PhoneNumber      string
 		Email            string
+		Status           string
 	}
 )
 
@@ -40,7 +42,7 @@ func (c *home) Get(ctx echo.Context) error {
 	return c.RenderPage(ctx, page)
 }
 
-func (c *home) getUserOrders(ctx echo.Context, pager *controller.Pager) ([]order, error) {
+func (c *home) getUserOrders(ctx echo.Context, pager *controller.Pager) ([]orderData, error) {
 	user, err := c.Container.Auth.GetAuthenticatedUser(ctx)
 	if err != nil {
 		return nil, err
@@ -51,17 +53,19 @@ func (c *home) getUserOrders(ctx echo.Context, pager *controller.Pager) ([]order
 		return nil, err
 	}
 
-	result := []order{}
+	result := []orderData{}
 	for _, o := range orders {
-		result = append(result, order{
+		result = append(result, orderData{
 			Id:               o.ID,
-			StartTime:        o.StartTime.Format("2006-01-02 15:04"),
-			EndTime:          o.EndTime.Format("2006-01-02 15:04"),
+			Date:             o.StartTime.Format("2006-01-02"),
+			StartTime:        o.StartTime.Format("15:04"),
+			EndTime:          o.EndTime.Format("15:04"),
 			DepartureStation: station.StationCode(o.DepartureStation),
 			ArrivalStation:   station.StationCode(o.ArrivalStation),
 			IdNumber:         o.IDNumber,
 			PhoneNumber:      o.PhoneNumber,
 			Email:            o.Email,
+			Status:           o.Status,
 		})
 	}
 

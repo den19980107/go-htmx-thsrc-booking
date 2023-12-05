@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/mikestefanello/pagoda/ent/order"
+	"github.com/mikestefanello/pagoda/ent/ordervalidation"
 	"github.com/mikestefanello/pagoda/ent/passwordtoken"
 	"github.com/mikestefanello/pagoda/ent/predicate"
 	"github.com/mikestefanello/pagoda/ent/user"
@@ -26,9 +27,10 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeOrder         = "Order"
-	TypePasswordToken = "PasswordToken"
-	TypeUser          = "User"
+	TypeOrder           = "Order"
+	TypeOrderValidation = "OrderValidation"
+	TypePasswordToken   = "PasswordToken"
+	TypeUser            = "User"
 )
 
 // OrderMutation represents an operation that mutates the Order nodes in the graph.
@@ -44,10 +46,14 @@ type OrderMutation struct {
 	id_number         *string
 	phone_number      *string
 	email             *string
+	status            *string
 	created_at        *time.Time
 	clearedFields     map[string]struct{}
 	user              *int
 	cleareduser       bool
+	validation        map[int]struct{}
+	removedvalidation map[int]struct{}
+	clearedvalidation bool
 	done              bool
 	oldValue          func(context.Context) (*Order, error)
 	predicates        []predicate.Order
@@ -403,6 +409,42 @@ func (m *OrderMutation) ResetEmail() {
 	m.email = nil
 }
 
+// SetStatus sets the "status" field.
+func (m *OrderMutation) SetStatus(s string) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *OrderMutation) Status() (r string, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Order entity.
+// If the Order object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderMutation) OldStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *OrderMutation) ResetStatus() {
+	m.status = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *OrderMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -478,6 +520,60 @@ func (m *OrderMutation) ResetUser() {
 	m.cleareduser = false
 }
 
+// AddValidationIDs adds the "validation" edge to the OrderValidation entity by ids.
+func (m *OrderMutation) AddValidationIDs(ids ...int) {
+	if m.validation == nil {
+		m.validation = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.validation[ids[i]] = struct{}{}
+	}
+}
+
+// ClearValidation clears the "validation" edge to the OrderValidation entity.
+func (m *OrderMutation) ClearValidation() {
+	m.clearedvalidation = true
+}
+
+// ValidationCleared reports if the "validation" edge to the OrderValidation entity was cleared.
+func (m *OrderMutation) ValidationCleared() bool {
+	return m.clearedvalidation
+}
+
+// RemoveValidationIDs removes the "validation" edge to the OrderValidation entity by IDs.
+func (m *OrderMutation) RemoveValidationIDs(ids ...int) {
+	if m.removedvalidation == nil {
+		m.removedvalidation = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.validation, ids[i])
+		m.removedvalidation[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedValidation returns the removed IDs of the "validation" edge to the OrderValidation entity.
+func (m *OrderMutation) RemovedValidationIDs() (ids []int) {
+	for id := range m.removedvalidation {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ValidationIDs returns the "validation" edge IDs in the mutation.
+func (m *OrderMutation) ValidationIDs() (ids []int) {
+	for id := range m.validation {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetValidation resets all changes to the "validation" edge.
+func (m *OrderMutation) ResetValidation() {
+	m.validation = nil
+	m.clearedvalidation = false
+	m.removedvalidation = nil
+}
+
 // Where appends a list predicates to the OrderMutation builder.
 func (m *OrderMutation) Where(ps ...predicate.Order) {
 	m.predicates = append(m.predicates, ps...)
@@ -512,7 +608,7 @@ func (m *OrderMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrderMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.start_time != nil {
 		fields = append(fields, order.FieldStartTime)
 	}
@@ -533,6 +629,9 @@ func (m *OrderMutation) Fields() []string {
 	}
 	if m.email != nil {
 		fields = append(fields, order.FieldEmail)
+	}
+	if m.status != nil {
+		fields = append(fields, order.FieldStatus)
 	}
 	if m.created_at != nil {
 		fields = append(fields, order.FieldCreatedAt)
@@ -559,6 +658,8 @@ func (m *OrderMutation) Field(name string) (ent.Value, bool) {
 		return m.PhoneNumber()
 	case order.FieldEmail:
 		return m.Email()
+	case order.FieldStatus:
+		return m.Status()
 	case order.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -584,6 +685,8 @@ func (m *OrderMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldPhoneNumber(ctx)
 	case order.FieldEmail:
 		return m.OldEmail(ctx)
+	case order.FieldStatus:
+		return m.OldStatus(ctx)
 	case order.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -643,6 +746,13 @@ func (m *OrderMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEmail(v)
+		return nil
+	case order.FieldStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
 		return nil
 	case order.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -721,6 +831,9 @@ func (m *OrderMutation) ResetField(name string) error {
 	case order.FieldEmail:
 		m.ResetEmail()
 		return nil
+	case order.FieldStatus:
+		m.ResetStatus()
+		return nil
 	case order.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -730,9 +843,12 @@ func (m *OrderMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *OrderMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.user != nil {
 		edges = append(edges, order.EdgeUser)
+	}
+	if m.validation != nil {
+		edges = append(edges, order.EdgeValidation)
 	}
 	return edges
 }
@@ -745,27 +861,47 @@ func (m *OrderMutation) AddedIDs(name string) []ent.Value {
 		if id := m.user; id != nil {
 			return []ent.Value{*id}
 		}
+	case order.EdgeValidation:
+		ids := make([]ent.Value, 0, len(m.validation))
+		for id := range m.validation {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *OrderMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.removedvalidation != nil {
+		edges = append(edges, order.EdgeValidation)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *OrderMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case order.EdgeValidation:
+		ids := make([]ent.Value, 0, len(m.removedvalidation))
+		for id := range m.removedvalidation {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *OrderMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.cleareduser {
 		edges = append(edges, order.EdgeUser)
+	}
+	if m.clearedvalidation {
+		edges = append(edges, order.EdgeValidation)
 	}
 	return edges
 }
@@ -776,6 +912,8 @@ func (m *OrderMutation) EdgeCleared(name string) bool {
 	switch name {
 	case order.EdgeUser:
 		return m.cleareduser
+	case order.EdgeValidation:
+		return m.clearedvalidation
 	}
 	return false
 }
@@ -798,8 +936,566 @@ func (m *OrderMutation) ResetEdge(name string) error {
 	case order.EdgeUser:
 		m.ResetUser()
 		return nil
+	case order.EdgeValidation:
+		m.ResetValidation()
+		return nil
 	}
 	return fmt.Errorf("unknown Order edge %s", name)
+}
+
+// OrderValidationMutation represents an operation that mutates the OrderValidation nodes in the graph.
+type OrderValidationMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	jession_id    *string
+	captcha_image *string
+	cookies       *string
+	created_at    *time.Time
+	clearedFields map[string]struct{}
+	_order        *int
+	cleared_order bool
+	done          bool
+	oldValue      func(context.Context) (*OrderValidation, error)
+	predicates    []predicate.OrderValidation
+}
+
+var _ ent.Mutation = (*OrderValidationMutation)(nil)
+
+// ordervalidationOption allows management of the mutation configuration using functional options.
+type ordervalidationOption func(*OrderValidationMutation)
+
+// newOrderValidationMutation creates new mutation for the OrderValidation entity.
+func newOrderValidationMutation(c config, op Op, opts ...ordervalidationOption) *OrderValidationMutation {
+	m := &OrderValidationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeOrderValidation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withOrderValidationID sets the ID field of the mutation.
+func withOrderValidationID(id int) ordervalidationOption {
+	return func(m *OrderValidationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *OrderValidation
+		)
+		m.oldValue = func(ctx context.Context) (*OrderValidation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().OrderValidation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withOrderValidation sets the old OrderValidation of the mutation.
+func withOrderValidation(node *OrderValidation) ordervalidationOption {
+	return func(m *OrderValidationMutation) {
+		m.oldValue = func(context.Context) (*OrderValidation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m OrderValidationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m OrderValidationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *OrderValidationMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *OrderValidationMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().OrderValidation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetJessionID sets the "jession_id" field.
+func (m *OrderValidationMutation) SetJessionID(s string) {
+	m.jession_id = &s
+}
+
+// JessionID returns the value of the "jession_id" field in the mutation.
+func (m *OrderValidationMutation) JessionID() (r string, exists bool) {
+	v := m.jession_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldJessionID returns the old "jession_id" field's value of the OrderValidation entity.
+// If the OrderValidation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderValidationMutation) OldJessionID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldJessionID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldJessionID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldJessionID: %w", err)
+	}
+	return oldValue.JessionID, nil
+}
+
+// ResetJessionID resets all changes to the "jession_id" field.
+func (m *OrderValidationMutation) ResetJessionID() {
+	m.jession_id = nil
+}
+
+// SetCaptchaImage sets the "captcha_image" field.
+func (m *OrderValidationMutation) SetCaptchaImage(s string) {
+	m.captcha_image = &s
+}
+
+// CaptchaImage returns the value of the "captcha_image" field in the mutation.
+func (m *OrderValidationMutation) CaptchaImage() (r string, exists bool) {
+	v := m.captcha_image
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCaptchaImage returns the old "captcha_image" field's value of the OrderValidation entity.
+// If the OrderValidation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderValidationMutation) OldCaptchaImage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCaptchaImage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCaptchaImage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCaptchaImage: %w", err)
+	}
+	return oldValue.CaptchaImage, nil
+}
+
+// ResetCaptchaImage resets all changes to the "captcha_image" field.
+func (m *OrderValidationMutation) ResetCaptchaImage() {
+	m.captcha_image = nil
+}
+
+// SetCookies sets the "cookies" field.
+func (m *OrderValidationMutation) SetCookies(s string) {
+	m.cookies = &s
+}
+
+// Cookies returns the value of the "cookies" field in the mutation.
+func (m *OrderValidationMutation) Cookies() (r string, exists bool) {
+	v := m.cookies
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCookies returns the old "cookies" field's value of the OrderValidation entity.
+// If the OrderValidation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderValidationMutation) OldCookies(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCookies is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCookies requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCookies: %w", err)
+	}
+	return oldValue.Cookies, nil
+}
+
+// ResetCookies resets all changes to the "cookies" field.
+func (m *OrderValidationMutation) ResetCookies() {
+	m.cookies = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *OrderValidationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *OrderValidationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the OrderValidation entity.
+// If the OrderValidation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderValidationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *OrderValidationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetOrderID sets the "order" edge to the Order entity by id.
+func (m *OrderValidationMutation) SetOrderID(id int) {
+	m._order = &id
+}
+
+// ClearOrder clears the "order" edge to the Order entity.
+func (m *OrderValidationMutation) ClearOrder() {
+	m.cleared_order = true
+}
+
+// OrderCleared reports if the "order" edge to the Order entity was cleared.
+func (m *OrderValidationMutation) OrderCleared() bool {
+	return m.cleared_order
+}
+
+// OrderID returns the "order" edge ID in the mutation.
+func (m *OrderValidationMutation) OrderID() (id int, exists bool) {
+	if m._order != nil {
+		return *m._order, true
+	}
+	return
+}
+
+// OrderIDs returns the "order" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrderID instead. It exists only for internal usage by the builders.
+func (m *OrderValidationMutation) OrderIDs() (ids []int) {
+	if id := m._order; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrder resets all changes to the "order" edge.
+func (m *OrderValidationMutation) ResetOrder() {
+	m._order = nil
+	m.cleared_order = false
+}
+
+// Where appends a list predicates to the OrderValidationMutation builder.
+func (m *OrderValidationMutation) Where(ps ...predicate.OrderValidation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the OrderValidationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *OrderValidationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.OrderValidation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *OrderValidationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *OrderValidationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (OrderValidation).
+func (m *OrderValidationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *OrderValidationMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.jession_id != nil {
+		fields = append(fields, ordervalidation.FieldJessionID)
+	}
+	if m.captcha_image != nil {
+		fields = append(fields, ordervalidation.FieldCaptchaImage)
+	}
+	if m.cookies != nil {
+		fields = append(fields, ordervalidation.FieldCookies)
+	}
+	if m.created_at != nil {
+		fields = append(fields, ordervalidation.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *OrderValidationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case ordervalidation.FieldJessionID:
+		return m.JessionID()
+	case ordervalidation.FieldCaptchaImage:
+		return m.CaptchaImage()
+	case ordervalidation.FieldCookies:
+		return m.Cookies()
+	case ordervalidation.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *OrderValidationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case ordervalidation.FieldJessionID:
+		return m.OldJessionID(ctx)
+	case ordervalidation.FieldCaptchaImage:
+		return m.OldCaptchaImage(ctx)
+	case ordervalidation.FieldCookies:
+		return m.OldCookies(ctx)
+	case ordervalidation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown OrderValidation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OrderValidationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case ordervalidation.FieldJessionID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetJessionID(v)
+		return nil
+	case ordervalidation.FieldCaptchaImage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCaptchaImage(v)
+		return nil
+	case ordervalidation.FieldCookies:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCookies(v)
+		return nil
+	case ordervalidation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown OrderValidation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *OrderValidationMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *OrderValidationMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OrderValidationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown OrderValidation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *OrderValidationMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *OrderValidationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *OrderValidationMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown OrderValidation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *OrderValidationMutation) ResetField(name string) error {
+	switch name {
+	case ordervalidation.FieldJessionID:
+		m.ResetJessionID()
+		return nil
+	case ordervalidation.FieldCaptchaImage:
+		m.ResetCaptchaImage()
+		return nil
+	case ordervalidation.FieldCookies:
+		m.ResetCookies()
+		return nil
+	case ordervalidation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown OrderValidation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *OrderValidationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m._order != nil {
+		edges = append(edges, ordervalidation.EdgeOrder)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *OrderValidationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case ordervalidation.EdgeOrder:
+		if id := m._order; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *OrderValidationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *OrderValidationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *OrderValidationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleared_order {
+		edges = append(edges, ordervalidation.EdgeOrder)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *OrderValidationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case ordervalidation.EdgeOrder:
+		return m.cleared_order
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *OrderValidationMutation) ClearEdge(name string) error {
+	switch name {
+	case ordervalidation.EdgeOrder:
+		m.ClearOrder()
+		return nil
+	}
+	return fmt.Errorf("unknown OrderValidation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *OrderValidationMutation) ResetEdge(name string) error {
+	switch name {
+	case ordervalidation.EdgeOrder:
+		m.ResetOrder()
+		return nil
+	}
+	return fmt.Errorf("unknown OrderValidation edge %s", name)
 }
 
 // PasswordTokenMutation represents an operation that mutates the PasswordToken nodes in the graph.

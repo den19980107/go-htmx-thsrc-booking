@@ -28,10 +28,14 @@ const (
 	FieldPhoneNumber = "phone_number"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
+	// EdgeValidation holds the string denoting the validation edge name in mutations.
+	EdgeValidation = "validation"
 	// Table holds the table name of the order in the database.
 	Table = "orders"
 	// UserTable is the table that holds the user relation/edge.
@@ -41,6 +45,13 @@ const (
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
 	UserColumn = "order_user"
+	// ValidationTable is the table that holds the validation relation/edge.
+	ValidationTable = "order_validations"
+	// ValidationInverseTable is the table name for the OrderValidation entity.
+	// It exists in this package in order to avoid circular dependency with the "ordervalidation" package.
+	ValidationInverseTable = "order_validations"
+	// ValidationColumn is the table column denoting the validation relation/edge.
+	ValidationColumn = "order_validation_order"
 )
 
 // Columns holds all SQL columns for order fields.
@@ -53,6 +64,7 @@ var Columns = []string{
 	FieldIDNumber,
 	FieldPhoneNumber,
 	FieldEmail,
+	FieldStatus,
 	FieldCreatedAt,
 }
 
@@ -88,6 +100,10 @@ var (
 	PhoneNumberValidator func(string) error
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
+	// DefaultStatus holds the default value on creation for the "status" field.
+	DefaultStatus string
+	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	StatusValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 )
@@ -135,6 +151,11 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
 }
 
+// ByStatus orders the results by the status field.
+func ByStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -146,10 +167,31 @@ func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newUserStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByValidationCount orders the results by validation count.
+func ByValidationCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newValidationStep(), opts...)
+	}
+}
+
+// ByValidation orders the results by validation terms.
+func ByValidation(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newValidationStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UserInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, UserTable, UserColumn),
+	)
+}
+func newValidationStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ValidationInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, ValidationTable, ValidationColumn),
 	)
 }

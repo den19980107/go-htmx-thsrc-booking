@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mikestefanello/pagoda/ent/order"
+	"github.com/mikestefanello/pagoda/ent/ordervalidation"
 	"github.com/mikestefanello/pagoda/ent/passwordtoken"
 	"github.com/mikestefanello/pagoda/ent/schema"
 	"github.com/mikestefanello/pagoda/ent/user"
@@ -37,10 +38,34 @@ func init() {
 	orderDescEmail := orderFields[6].Descriptor()
 	// order.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	order.EmailValidator = orderDescEmail.Validators[0].(func(string) error)
+	// orderDescStatus is the schema descriptor for status field.
+	orderDescStatus := orderFields[7].Descriptor()
+	// order.DefaultStatus holds the default value on creation for the status field.
+	order.DefaultStatus = orderDescStatus.Default.(string)
+	// order.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	order.StatusValidator = orderDescStatus.Validators[0].(func(string) error)
 	// orderDescCreatedAt is the schema descriptor for created_at field.
-	orderDescCreatedAt := orderFields[7].Descriptor()
+	orderDescCreatedAt := orderFields[8].Descriptor()
 	// order.DefaultCreatedAt holds the default value on creation for the created_at field.
 	order.DefaultCreatedAt = orderDescCreatedAt.Default.(func() time.Time)
+	ordervalidationFields := schema.OrderValidation{}.Fields()
+	_ = ordervalidationFields
+	// ordervalidationDescJessionID is the schema descriptor for jession_id field.
+	ordervalidationDescJessionID := ordervalidationFields[0].Descriptor()
+	// ordervalidation.JessionIDValidator is a validator for the "jession_id" field. It is called by the builders before save.
+	ordervalidation.JessionIDValidator = ordervalidationDescJessionID.Validators[0].(func(string) error)
+	// ordervalidationDescCaptchaImage is the schema descriptor for captcha_image field.
+	ordervalidationDescCaptchaImage := ordervalidationFields[1].Descriptor()
+	// ordervalidation.CaptchaImageValidator is a validator for the "captcha_image" field. It is called by the builders before save.
+	ordervalidation.CaptchaImageValidator = ordervalidationDescCaptchaImage.Validators[0].(func(string) error)
+	// ordervalidationDescCookies is the schema descriptor for cookies field.
+	ordervalidationDescCookies := ordervalidationFields[2].Descriptor()
+	// ordervalidation.CookiesValidator is a validator for the "cookies" field. It is called by the builders before save.
+	ordervalidation.CookiesValidator = ordervalidationDescCookies.Validators[0].(func(string) error)
+	// ordervalidationDescCreatedAt is the schema descriptor for created_at field.
+	ordervalidationDescCreatedAt := ordervalidationFields[3].Descriptor()
+	// ordervalidation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ordervalidation.DefaultCreatedAt = ordervalidationDescCreatedAt.Default.(func() time.Time)
 	passwordtokenFields := schema.PasswordToken{}.Fields()
 	_ = passwordtokenFields
 	// passwordtokenDescHash is the schema descriptor for hash field.

@@ -47,9 +47,9 @@ func BuildRouter(c *services.Container) {
 		session.Middleware(sessions.NewCookieStore([]byte(c.Config.App.EncryptionKey))),
 		middleware.LoadAuthenticatedUser(c.Auth),
 		middleware.ServeCachedPage(c.Cache),
-		echomw.CSRFWithConfig(echomw.CSRFConfig{
-			TokenLookup: "form:csrf",
-		}),
+		// echomw.CSRFWithConfig(echomw.CSRFConfig{
+		// 	TokenLookup: "form:csrf",
+		// }),
 	)
 
 	// Base controller
@@ -81,6 +81,9 @@ func navRoutes(c *services.Container, g *echo.Group, ctr controller.Controller) 
 	order := orderController{Controller: ctr}
 	g.GET("/order", order.Get, middleware.RequireAuthentication()).Name = "order"
 	g.POST("/order", order.Post, middleware.RequireAuthentication()).Name = "order.post"
+	g.DELETE("/order/:orderId", order.Delete, middleware.RequireAuthentication()).Name = "order.delete"
+	g.GET("/order/validate/:validateId", order.GetValidate, middleware.RequireAuthentication()).Name = "order.validate"
+	g.POST("/order/validate", order.PostValidation, middleware.RequireAuthentication()).Name = "order.complete-validate"
 }
 
 func userRoutes(c *services.Container, g *echo.Group, ctr controller.Controller) {

@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Order is the client for interacting with the Order builders.
 	Order *OrderClient
+	// OrderValidation is the client for interacting with the OrderValidation builders.
+	OrderValidation *OrderValidationClient
 	// PasswordToken is the client for interacting with the PasswordToken builders.
 	PasswordToken *PasswordTokenClient
 	// User is the client for interacting with the User builders.
@@ -150,6 +152,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Order = NewOrderClient(tx.config)
+	tx.OrderValidation = NewOrderValidationClient(tx.config)
 	tx.PasswordToken = NewPasswordTokenClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }

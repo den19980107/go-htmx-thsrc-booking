@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/mikestefanello/pagoda/pkg/models"
 )
 
 // Order holds the schema definition for the Order entity.
@@ -28,6 +29,9 @@ func (Order) Fields() []ent.Field {
 			NotEmpty(),
 		field.String("email").
 			NotEmpty(),
+		field.String("status").
+			NotEmpty().
+			Default(models.OrderPending),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -40,5 +44,7 @@ func (Order) Edges() []ent.Edge {
 		edge.To("user", User.Type).
 			Required().
 			Unique(),
+		edge.From("validation", OrderValidation.Type).
+			Ref("order"),
 	}
 }

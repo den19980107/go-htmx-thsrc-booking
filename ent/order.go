@@ -32,6 +32,8 @@ type Order struct {
 	PhoneNumber string `json:"phone_number,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
+	// Status holds the value of the "status" field.
+	Status string `json:"status,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -45,9 +47,11 @@ type Order struct {
 type OrderEdges struct {
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
+	// Validation holds the value of the validation edge.
+	Validation []*OrderValidation `json:"validation,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -63,6 +67,15 @@ func (e OrderEdges) UserOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "user"}
 }
 
+// ValidationOrErr returns the Validation value or an error if the edge
+// was not loaded in eager-loading.
+func (e OrderEdges) ValidationOrErr() ([]*OrderValidation, error) {
+	if e.loadedTypes[1] {
+		return e.Validation, nil
+	}
+	return nil, &NotLoadedError{edge: "validation"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Order) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -70,7 +83,7 @@ func (*Order) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case order.FieldID:
 			values[i] = new(sql.NullInt64)
-		case order.FieldDepartureStation, order.FieldArrivalStation, order.FieldIDNumber, order.FieldPhoneNumber, order.FieldEmail:
+		case order.FieldDepartureStation, order.FieldArrivalStation, order.FieldIDNumber, order.FieldPhoneNumber, order.FieldEmail, order.FieldStatus:
 			values[i] = new(sql.NullString)
 		case order.FieldStartTime, order.FieldEndTime, order.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -139,6 +152,12 @@ func (o *Order) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				o.Email = value.String
 			}
+		case order.FieldStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
+			} else if value.Valid {
+				o.Status = value.String
+			}
 		case order.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -168,6 +187,11 @@ func (o *Order) Value(name string) (ent.Value, error) {
 // QueryUser queries the "user" edge of the Order entity.
 func (o *Order) QueryUser() *UserQuery {
 	return NewOrderClient(o.config).QueryUser(o)
+}
+
+// QueryValidation queries the "validation" edge of the Order entity.
+func (o *Order) QueryValidation() *OrderValidationQuery {
+	return NewOrderClient(o.config).QueryValidation(o)
 }
 
 // Update returns a builder for updating this Order.
@@ -213,6 +237,9 @@ func (o *Order) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("email=")
 	builder.WriteString(o.Email)
+	builder.WriteString(", ")
+	builder.WriteString("status=")
+	builder.WriteString(o.Status)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(o.CreatedAt.Format(time.ANSIC))

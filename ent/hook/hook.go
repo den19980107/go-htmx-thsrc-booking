@@ -21,6 +21,18 @@ func (f OrderFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OrderMutation", m)
 }
 
+// The OrderValidationFunc type is an adapter to allow the use of ordinary
+// function as OrderValidation mutator.
+type OrderValidationFunc func(context.Context, *ent.OrderValidationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f OrderValidationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.OrderValidationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OrderValidationMutation", m)
+}
+
 // The PasswordTokenFunc type is an adapter to allow the use of ordinary
 // function as PasswordToken mutator.
 type PasswordTokenFunc func(context.Context, *ent.PasswordTokenMutation) (ent.Value, error)

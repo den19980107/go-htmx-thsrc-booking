@@ -11,6 +11,7 @@ import (
 
 	"github.com/mikestefanello/pagoda/pkg/routes"
 	"github.com/mikestefanello/pagoda/pkg/services"
+	"github.com/mikestefanello/pagoda/pkg/tasks"
 )
 
 func main() {
@@ -56,6 +57,10 @@ func main() {
 		if err := c.Tasks.StartScheduler(); err != nil {
 			c.Web.Logger.Fatalf("scheduler shutdown: %v", err)
 		}
+	}()
+
+	go func() {
+		tasks.Run(c)
 	}()
 
 	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.

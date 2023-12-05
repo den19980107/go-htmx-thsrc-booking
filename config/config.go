@@ -65,6 +65,7 @@ type (
 
 	// HTTPConfig stores HTTP configuration
 	HTTPConfig struct {
+		Domain       string
 		Hostname     string
 		Port         uint16
 		ReadTimeout  time.Duration

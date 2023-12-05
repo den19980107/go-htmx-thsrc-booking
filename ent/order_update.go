@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mikestefanello/pagoda/ent/order"
+	"github.com/mikestefanello/pagoda/ent/ordervalidation"
 	"github.com/mikestefanello/pagoda/ent/predicate"
 	"github.com/mikestefanello/pagoda/ent/user"
 )
@@ -127,6 +128,20 @@ func (ou *OrderUpdate) SetNillableEmail(s *string) *OrderUpdate {
 	return ou
 }
 
+// SetStatus sets the "status" field.
+func (ou *OrderUpdate) SetStatus(s string) *OrderUpdate {
+	ou.mutation.SetStatus(s)
+	return ou
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (ou *OrderUpdate) SetNillableStatus(s *string) *OrderUpdate {
+	if s != nil {
+		ou.SetStatus(*s)
+	}
+	return ou
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (ou *OrderUpdate) SetUserID(id int) *OrderUpdate {
 	ou.mutation.SetUserID(id)
@@ -138,6 +153,21 @@ func (ou *OrderUpdate) SetUser(u *User) *OrderUpdate {
 	return ou.SetUserID(u.ID)
 }
 
+// AddValidationIDs adds the "validation" edge to the OrderValidation entity by IDs.
+func (ou *OrderUpdate) AddValidationIDs(ids ...int) *OrderUpdate {
+	ou.mutation.AddValidationIDs(ids...)
+	return ou
+}
+
+// AddValidation adds the "validation" edges to the OrderValidation entity.
+func (ou *OrderUpdate) AddValidation(o ...*OrderValidation) *OrderUpdate {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return ou.AddValidationIDs(ids...)
+}
+
 // Mutation returns the OrderMutation object of the builder.
 func (ou *OrderUpdate) Mutation() *OrderMutation {
 	return ou.mutation
@@ -147,6 +177,27 @@ func (ou *OrderUpdate) Mutation() *OrderMutation {
 func (ou *OrderUpdate) ClearUser() *OrderUpdate {
 	ou.mutation.ClearUser()
 	return ou
+}
+
+// ClearValidation clears all "validation" edges to the OrderValidation entity.
+func (ou *OrderUpdate) ClearValidation() *OrderUpdate {
+	ou.mutation.ClearValidation()
+	return ou
+}
+
+// RemoveValidationIDs removes the "validation" edge to OrderValidation entities by IDs.
+func (ou *OrderUpdate) RemoveValidationIDs(ids ...int) *OrderUpdate {
+	ou.mutation.RemoveValidationIDs(ids...)
+	return ou
+}
+
+// RemoveValidation removes "validation" edges to OrderValidation entities.
+func (ou *OrderUpdate) RemoveValidation(o ...*OrderValidation) *OrderUpdate {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return ou.RemoveValidationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -203,6 +254,11 @@ func (ou *OrderUpdate) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Order.email": %w`, err)}
 		}
 	}
+	if v, ok := ou.mutation.Status(); ok {
+		if err := order.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Order.status": %w`, err)}
+		}
+	}
 	if _, ok := ou.mutation.UserID(); ou.mutation.UserCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Order.user"`)
 	}
@@ -242,6 +298,9 @@ func (ou *OrderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ou.mutation.Email(); ok {
 		_spec.SetField(order.FieldEmail, field.TypeString, value)
 	}
+	if value, ok := ou.mutation.Status(); ok {
+		_spec.SetField(order.FieldStatus, field.TypeString, value)
+	}
 	if ou.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -264,6 +323,51 @@ func (ou *OrderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.ValidationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   order.ValidationTable,
+			Columns: []string{order.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ordervalidation.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.RemovedValidationIDs(); len(nodes) > 0 && !ou.mutation.ValidationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   order.ValidationTable,
+			Columns: []string{order.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ordervalidation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.ValidationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   order.ValidationTable,
+			Columns: []string{order.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ordervalidation.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -389,6 +493,20 @@ func (ouo *OrderUpdateOne) SetNillableEmail(s *string) *OrderUpdateOne {
 	return ouo
 }
 
+// SetStatus sets the "status" field.
+func (ouo *OrderUpdateOne) SetStatus(s string) *OrderUpdateOne {
+	ouo.mutation.SetStatus(s)
+	return ouo
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (ouo *OrderUpdateOne) SetNillableStatus(s *string) *OrderUpdateOne {
+	if s != nil {
+		ouo.SetStatus(*s)
+	}
+	return ouo
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (ouo *OrderUpdateOne) SetUserID(id int) *OrderUpdateOne {
 	ouo.mutation.SetUserID(id)
@@ -400,6 +518,21 @@ func (ouo *OrderUpdateOne) SetUser(u *User) *OrderUpdateOne {
 	return ouo.SetUserID(u.ID)
 }
 
+// AddValidationIDs adds the "validation" edge to the OrderValidation entity by IDs.
+func (ouo *OrderUpdateOne) AddValidationIDs(ids ...int) *OrderUpdateOne {
+	ouo.mutation.AddValidationIDs(ids...)
+	return ouo
+}
+
+// AddValidation adds the "validation" edges to the OrderValidation entity.
+func (ouo *OrderUpdateOne) AddValidation(o ...*OrderValidation) *OrderUpdateOne {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return ouo.AddValidationIDs(ids...)
+}
+
 // Mutation returns the OrderMutation object of the builder.
 func (ouo *OrderUpdateOne) Mutation() *OrderMutation {
 	return ouo.mutation
@@ -409,6 +542,27 @@ func (ouo *OrderUpdateOne) Mutation() *OrderMutation {
 func (ouo *OrderUpdateOne) ClearUser() *OrderUpdateOne {
 	ouo.mutation.ClearUser()
 	return ouo
+}
+
+// ClearValidation clears all "validation" edges to the OrderValidation entity.
+func (ouo *OrderUpdateOne) ClearValidation() *OrderUpdateOne {
+	ouo.mutation.ClearValidation()
+	return ouo
+}
+
+// RemoveValidationIDs removes the "validation" edge to OrderValidation entities by IDs.
+func (ouo *OrderUpdateOne) RemoveValidationIDs(ids ...int) *OrderUpdateOne {
+	ouo.mutation.RemoveValidationIDs(ids...)
+	return ouo
+}
+
+// RemoveValidation removes "validation" edges to OrderValidation entities.
+func (ouo *OrderUpdateOne) RemoveValidation(o ...*OrderValidation) *OrderUpdateOne {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return ouo.RemoveValidationIDs(ids...)
 }
 
 // Where appends a list predicates to the OrderUpdate builder.
@@ -478,6 +632,11 @@ func (ouo *OrderUpdateOne) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Order.email": %w`, err)}
 		}
 	}
+	if v, ok := ouo.mutation.Status(); ok {
+		if err := order.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Order.status": %w`, err)}
+		}
+	}
 	if _, ok := ouo.mutation.UserID(); ouo.mutation.UserCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Order.user"`)
 	}
@@ -534,6 +693,9 @@ func (ouo *OrderUpdateOne) sqlSave(ctx context.Context) (_node *Order, err error
 	if value, ok := ouo.mutation.Email(); ok {
 		_spec.SetField(order.FieldEmail, field.TypeString, value)
 	}
+	if value, ok := ouo.mutation.Status(); ok {
+		_spec.SetField(order.FieldStatus, field.TypeString, value)
+	}
 	if ouo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -556,6 +718,51 @@ func (ouo *OrderUpdateOne) sqlSave(ctx context.Context) (_node *Order, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.ValidationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   order.ValidationTable,
+			Columns: []string{order.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ordervalidation.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.RemovedValidationIDs(); len(nodes) > 0 && !ouo.mutation.ValidationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   order.ValidationTable,
+			Columns: []string{order.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ordervalidation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.ValidationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   order.ValidationTable,
+			Columns: []string{order.ValidationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ordervalidation.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
