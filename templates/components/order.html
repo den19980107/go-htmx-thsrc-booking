@@ -4,9 +4,6 @@
         <p>{{ .Date}} {{ .StartTime }} ~ {{ .EndTime }}</p>
         <h2 class="card-title">{{ .DepartureStation }} To {{ .ArrivalStation }}</h2>
         <p>Ticket info will send to {{ .Email }} </p>
-        {{- if not (eq .ErrorMessage "")}}
-        <p>{{.ErrorMessage}}</p>
-        {{end}}
         <div class="card-actions justify-between">
             {{- if eq .Status "pending"}}
             <div class="badge badge-info my-auto">{{ .Status }}</div>
@@ -19,7 +16,15 @@
             <div class="badge badge-success my-auto">{{ .Status }}</div>
             {{end}}
             {{- if eq .Status "failed"}}
-            <div class="badge badge-error my-auto">{{ .Status }}</div>
+            <div class="badge badge-error my-auto">
+                <p>
+                    {{- if not (eq .ErrorMessage "")}}
+                    {{.ErrorMessage}}
+                    {{ else }}
+                    {{.Status}}
+                    {{end}}
+                </p>
+            </div>
             {{end}}
         </div>
     </div>

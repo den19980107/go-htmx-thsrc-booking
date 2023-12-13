@@ -35,10 +35,13 @@ func booking(c *services.Container, ctx context.Context) {
 		log.Println()
 	}()
 
-	log.Println("retrive orders which need to book ...")
-
 	today := time.Now().UTC()
-	orders, err := c.ORM.Order.Query().Where(order.StartTimeGT(today), order.StatusEQ(models.OrderPending)).All(context.Background())
+	avaliableStartTime := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.Local)
+	avaliableEndTime := avaliableStartTime.Add(29 * 24 * time.Hour)
+
+	log.Printf("retrive orders which between %s and %s", avaliableStartTime, avaliableEndTime)
+
+	orders, err := c.ORM.Order.Query().Where(order.StartTimeGTE(avaliableStartTime), order.StartTimeLT(avaliableEndTime), order.StatusEQ(models.OrderPending)).All(context.Background())
 	if err != nil {
 		jobError = fmt.Errorf("get orders failed, err: %s", err)
 		return
