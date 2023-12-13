@@ -78,6 +78,20 @@ func (oc *OrderCreate) SetNillableStatus(s *string) *OrderCreate {
 	return oc
 }
 
+// SetErrorMessage sets the "error_message" field.
+func (oc *OrderCreate) SetErrorMessage(s string) *OrderCreate {
+	oc.mutation.SetErrorMessage(s)
+	return oc
+}
+
+// SetNillableErrorMessage sets the "error_message" field if the given value is not nil.
+func (oc *OrderCreate) SetNillableErrorMessage(s *string) *OrderCreate {
+	if s != nil {
+		oc.SetErrorMessage(*s)
+	}
+	return oc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (oc *OrderCreate) SetCreatedAt(t time.Time) *OrderCreate {
 	oc.mutation.SetCreatedAt(t)
@@ -157,6 +171,10 @@ func (oc *OrderCreate) defaults() {
 		v := order.DefaultStatus
 		oc.mutation.SetStatus(v)
 	}
+	if _, ok := oc.mutation.ErrorMessage(); !ok {
+		v := order.DefaultErrorMessage
+		oc.mutation.SetErrorMessage(v)
+	}
 	if _, ok := oc.mutation.CreatedAt(); !ok {
 		v := order.DefaultCreatedAt()
 		oc.mutation.SetCreatedAt(v)
@@ -218,6 +236,9 @@ func (oc *OrderCreate) check() error {
 		if err := order.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Order.status": %w`, err)}
 		}
+	}
+	if _, ok := oc.mutation.ErrorMessage(); !ok {
+		return &ValidationError{Name: "error_message", err: errors.New(`ent: missing required field "Order.error_message"`)}
 	}
 	if _, ok := oc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Order.created_at"`)}
@@ -282,6 +303,10 @@ func (oc *OrderCreate) createSpec() (*Order, *sqlgraph.CreateSpec) {
 	if value, ok := oc.mutation.Status(); ok {
 		_spec.SetField(order.FieldStatus, field.TypeString, value)
 		_node.Status = value
+	}
+	if value, ok := oc.mutation.ErrorMessage(); ok {
+		_spec.SetField(order.FieldErrorMessage, field.TypeString, value)
+		_node.ErrorMessage = value
 	}
 	if value, ok := oc.mutation.CreatedAt(); ok {
 		_spec.SetField(order.FieldCreatedAt, field.TypeTime, value)

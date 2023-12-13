@@ -47,6 +47,7 @@ type OrderMutation struct {
 	phone_number      *string
 	email             *string
 	status            *string
+	error_message     *string
 	created_at        *time.Time
 	clearedFields     map[string]struct{}
 	user              *int
@@ -445,6 +446,42 @@ func (m *OrderMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetErrorMessage sets the "error_message" field.
+func (m *OrderMutation) SetErrorMessage(s string) {
+	m.error_message = &s
+}
+
+// ErrorMessage returns the value of the "error_message" field in the mutation.
+func (m *OrderMutation) ErrorMessage() (r string, exists bool) {
+	v := m.error_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErrorMessage returns the old "error_message" field's value of the Order entity.
+// If the Order object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderMutation) OldErrorMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErrorMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErrorMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErrorMessage: %w", err)
+	}
+	return oldValue.ErrorMessage, nil
+}
+
+// ResetErrorMessage resets all changes to the "error_message" field.
+func (m *OrderMutation) ResetErrorMessage() {
+	m.error_message = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *OrderMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -608,7 +645,7 @@ func (m *OrderMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrderMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.start_time != nil {
 		fields = append(fields, order.FieldStartTime)
 	}
@@ -632,6 +669,9 @@ func (m *OrderMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, order.FieldStatus)
+	}
+	if m.error_message != nil {
+		fields = append(fields, order.FieldErrorMessage)
 	}
 	if m.created_at != nil {
 		fields = append(fields, order.FieldCreatedAt)
@@ -660,6 +700,8 @@ func (m *OrderMutation) Field(name string) (ent.Value, bool) {
 		return m.Email()
 	case order.FieldStatus:
 		return m.Status()
+	case order.FieldErrorMessage:
+		return m.ErrorMessage()
 	case order.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -687,6 +729,8 @@ func (m *OrderMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldEmail(ctx)
 	case order.FieldStatus:
 		return m.OldStatus(ctx)
+	case order.FieldErrorMessage:
+		return m.OldErrorMessage(ctx)
 	case order.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -753,6 +797,13 @@ func (m *OrderMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
+		return nil
+	case order.FieldErrorMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErrorMessage(v)
 		return nil
 	case order.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -833,6 +884,9 @@ func (m *OrderMutation) ResetField(name string) error {
 		return nil
 	case order.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case order.FieldErrorMessage:
+		m.ResetErrorMessage()
 		return nil
 	case order.FieldCreatedAt:
 		m.ResetCreatedAt()

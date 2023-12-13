@@ -59,8 +59,15 @@ func (c *Crawler) CompleteOrder(order ent.Order, captcha string, jsessionId stri
 		return fmt.Errorf("submit train order failed, err: %s", err)
 	}
 
-	if feedBackErrors != nil {
-		return fmt.Errorf("submit train order failed with feedback error: %+v", feedBackErrors)
+	if len(feedBackErrors) > 0 {
+		errorStr := ""
+		for index, err := range feedBackErrors {
+			errorStr += err.Error()
+			if index != len(feedBackErrors)-1 {
+				errorStr += "\n"
+			}
+		}
+		return errors.New(errorStr)
 	}
 
 	if len(trainDatas) == 0 {

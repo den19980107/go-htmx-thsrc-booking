@@ -23,6 +23,7 @@ type (
 		PhoneNumber      string
 		Email            string
 		Status           string
+		ErrorMessage     string
 	}
 )
 
@@ -66,6 +67,7 @@ func (c *home) getUserOrders(ctx echo.Context, pager *controller.Pager) ([]order
 			PhoneNumber:      o.PhoneNumber,
 			Email:            o.Email,
 			Status:           o.Status,
+			ErrorMessage:     o.ErrorMessage,
 		})
 	}
 

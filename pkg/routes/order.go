@@ -178,6 +178,7 @@ func (c *orderController) Post(ctx echo.Context) error {
 		SetArrivalStation(form.ArrivalStation).
 		SetDepartureStation(form.DepartureStation).
 		SetIDNumber(form.IdNumber).
+		SetErrorMessage("").
 		Save(ctx.Request().Context())
 
 	if err != nil {
@@ -206,12 +207,14 @@ func (c *orderController) PostValidation(ctx echo.Context) error {
 
 	cw, err := c.Container.CrawlerStore.Get(o.ID)
 	if err != nil {
+		_, err = o.Update().SetStatus(models.OrderFailed).SetErrorMessage(err.Error()).Save(ctx.Request().Context())
 		return c.Fail(err, "failed to find the crawler")
 	}
 	defer c.Container.CrawlerStore.Delete(o.ID)
 
 	err = cw.CompleteOrder(*o, form.Captcha, form.JsessionId)
 	if err != nil {
+		_, err = o.Update().SetStatus(models.OrderFailed).SetErrorMessage(err.Error()).Save(ctx.Request().Context())
 		return c.Fail(err, "failed to complete order")
 	}
 

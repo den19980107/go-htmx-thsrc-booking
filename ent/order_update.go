@@ -142,6 +142,20 @@ func (ou *OrderUpdate) SetNillableStatus(s *string) *OrderUpdate {
 	return ou
 }
 
+// SetErrorMessage sets the "error_message" field.
+func (ou *OrderUpdate) SetErrorMessage(s string) *OrderUpdate {
+	ou.mutation.SetErrorMessage(s)
+	return ou
+}
+
+// SetNillableErrorMessage sets the "error_message" field if the given value is not nil.
+func (ou *OrderUpdate) SetNillableErrorMessage(s *string) *OrderUpdate {
+	if s != nil {
+		ou.SetErrorMessage(*s)
+	}
+	return ou
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (ou *OrderUpdate) SetUserID(id int) *OrderUpdate {
 	ou.mutation.SetUserID(id)
@@ -300,6 +314,9 @@ func (ou *OrderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ou.mutation.Status(); ok {
 		_spec.SetField(order.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := ou.mutation.ErrorMessage(); ok {
+		_spec.SetField(order.FieldErrorMessage, field.TypeString, value)
 	}
 	if ou.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -507,6 +524,20 @@ func (ouo *OrderUpdateOne) SetNillableStatus(s *string) *OrderUpdateOne {
 	return ouo
 }
 
+// SetErrorMessage sets the "error_message" field.
+func (ouo *OrderUpdateOne) SetErrorMessage(s string) *OrderUpdateOne {
+	ouo.mutation.SetErrorMessage(s)
+	return ouo
+}
+
+// SetNillableErrorMessage sets the "error_message" field if the given value is not nil.
+func (ouo *OrderUpdateOne) SetNillableErrorMessage(s *string) *OrderUpdateOne {
+	if s != nil {
+		ouo.SetErrorMessage(*s)
+	}
+	return ouo
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (ouo *OrderUpdateOne) SetUserID(id int) *OrderUpdateOne {
 	ouo.mutation.SetUserID(id)
@@ -695,6 +726,9 @@ func (ouo *OrderUpdateOne) sqlSave(ctx context.Context) (_node *Order, err error
 	}
 	if value, ok := ouo.mutation.Status(); ok {
 		_spec.SetField(order.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := ouo.mutation.ErrorMessage(); ok {
+		_spec.SetField(order.FieldErrorMessage, field.TypeString, value)
 	}
 	if ouo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{

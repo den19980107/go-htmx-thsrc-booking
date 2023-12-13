@@ -32,6 +32,8 @@ func (Order) Fields() []ent.Field {
 		field.String("status").
 			NotEmpty().
 			Default(models.OrderPending),
+		field.String("error_message").
+			Default(""),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),

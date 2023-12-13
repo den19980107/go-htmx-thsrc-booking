@@ -34,6 +34,8 @@ type Order struct {
 	Email string `json:"email,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
+	// ErrorMessage holds the value of the "error_message" field.
+	ErrorMessage string `json:"error_message,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -83,7 +85,7 @@ func (*Order) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case order.FieldID:
 			values[i] = new(sql.NullInt64)
-		case order.FieldDepartureStation, order.FieldArrivalStation, order.FieldIDNumber, order.FieldPhoneNumber, order.FieldEmail, order.FieldStatus:
+		case order.FieldDepartureStation, order.FieldArrivalStation, order.FieldIDNumber, order.FieldPhoneNumber, order.FieldEmail, order.FieldStatus, order.FieldErrorMessage:
 			values[i] = new(sql.NullString)
 		case order.FieldStartTime, order.FieldEndTime, order.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -157,6 +159,12 @@ func (o *Order) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				o.Status = value.String
+			}
+		case order.FieldErrorMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field error_message", values[i])
+			} else if value.Valid {
+				o.ErrorMessage = value.String
 			}
 		case order.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -240,6 +248,9 @@ func (o *Order) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(o.Status)
+	builder.WriteString(", ")
+	builder.WriteString("error_message=")
+	builder.WriteString(o.ErrorMessage)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(o.CreatedAt.Format(time.ANSIC))
