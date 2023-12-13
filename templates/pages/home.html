@@ -30,19 +30,14 @@
     {{ template "order" .}}
     {{- end}}
 
-    <div class="field is-grouped is-grouped-centered">
-        {{- if not $.Pager.IsBeginning}}
-        <p class="control">
-            <button class="button is-primary" hx-swap="outerHTML" hx-get="/?page={{sub $.Pager.Page 1}}"
-                hx-target="#orders">Previous page</button>
-        </p>
-        {{- end}}
-        {{- if not $.Pager.IsEnd}}
-        <p class="control">
-            <button class="button is-primary" hx-swap="outerHTML" hx-get="/?page={{add $.Pager.Page 1}}"
-                hx-target="#orders">Next page</button>
-        </p>
-        {{- end}}
+    <div class="flex justify-center">
+        <div class="join">
+            <button class="join-item btn" {{- if $.Pager.IsBeginning}} disabled {{- end}} hx-swap="outerHTML"
+                hx-get="/?page={{sub $.Pager.Page 1}}" hx-target="#orders">«</button>
+            <button class="join-item btn">Page {{$.Pager.Page}} / {{$.Pager.Pages}}</button>
+            <button class="join-item btn" {{- if $.Pager.IsEnd}} disabled {{- end}} hx-swap="outerHTML"
+                hx-get="/?page={{add $.Pager.Page 1}}" hx-target="#orders">»</button>
+        </div>
     </div>
 </div>
 {{end}}

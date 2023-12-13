@@ -33,7 +33,7 @@ func (c *home) Get(ctx echo.Context) error {
 	page.Name = "home"
 	page.Metatags.Description = "Welcome to the homepage."
 	page.Metatags.Keywords = []string{"Go", "MVC", "Web", "Software"}
-	page.Pager = controller.NewPager(ctx, 4)
+	page.Pager = controller.NewPager(ctx, 3)
 	orders, err := c.getUserOrders(ctx, &page.Pager)
 	if err != nil {
 		return c.Fail(err, "failed to get user orders")
@@ -48,6 +48,12 @@ func (c *home) getUserOrders(ctx echo.Context, pager *controller.Pager) ([]order
 	if err != nil {
 		return nil, err
 	}
+
+	total, err := user.QueryOrderer().Count(ctx.Request().Context())
+	if err != nil {
+		return nil, err
+	}
+	pager.SetItems(total)
 
 	orders, err := user.QueryOrderer().Limit(pager.ItemsPerPage).Offset(pager.GetOffset()).All(ctx.Request().Context())
 	if err != nil {
