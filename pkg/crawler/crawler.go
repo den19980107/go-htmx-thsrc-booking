@@ -54,9 +54,13 @@ func (c *Crawler) SetCookies(url string, cookies []*http.Cookie) error {
 }
 
 func (c *Crawler) CompleteOrder(order ent.Order, captcha string, jsessionId string) error {
-	trainDatas, err := c.submitForm(order, captcha, jsessionId)
+	trainDatas, feedBackErrors, err := c.submitForm(order, captcha, jsessionId)
 	if err != nil {
 		return fmt.Errorf("submit train order failed, err: %s", err)
+	}
+
+	if feedBackErrors != nil {
+		return fmt.Errorf("submit train order failed with feedback error: %+v", feedBackErrors)
 	}
 
 	if len(trainDatas) == 0 {
@@ -110,7 +114,7 @@ func (c *Crawler) GetCaptchaImageAndJsessionId(orderId int) (imageBase64 string,
 	return imageBase64, jsessionId, cookieStr, err
 }
 
-func (c *Crawler) submitForm(order ent.Order, captchaResult string, jsessionId string) ([]TrainData, error) {
+func (c *Crawler) submitForm(order ent.Order, captchaResult string, jsessionId string) ([]TrainData, []FeedBackError, error) {
 	toTimeTable := formatTimeForTHSRC(order.StartTime)
 	submitForm := SubmitForm{
 		TripConTypesoftrip:            "0",
@@ -137,15 +141,16 @@ func (c *Crawler) submitForm(order ent.Order, captchaResult string, jsessionId s
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
-	var predictError error
-	var trainDatas []TrainData
+	trainDatas := []TrainData{}
+	feedBackErrors := []FeedBackError{}
 
 	collector := cloneCollectorWithBasicEvent(c.collector, "submit form")
 
 	// detect predict captcha failed
 	collector.OnHTML("li[class='feedbackPanelERROR']", func(h *colly.HTMLElement) {
-		log.Printf("predict not correct")
-		predictError = fmt.Errorf("captcha predict not correct!")
+		h.ForEach("span", func(i int, h *colly.HTMLElement) {
+			feedBackErrors = append(feedBackErrors, GetFeedBackError(h.Text))
+		})
 	})
 
 	// if predict succes, should get response of list of train
@@ -169,15 +174,15 @@ func (c *Crawler) submitForm(order ent.Order, captchaResult string, jsessionId s
 
 	wg.Wait()
 
-	if predictError != nil {
-		return nil, predictError
+	if feedBackErrors != nil {
+		return nil, feedBackErrors, nil
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return trainDatas, nil
+	return trainDatas, nil, nil
 }
 
 func (c *Crawler) confirmTrain(trainData TrainData) error {
