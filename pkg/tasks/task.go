@@ -37,7 +37,8 @@ func booking(c *services.Container, ctx context.Context) {
 		log.Println()
 	}()
 
-	today := time.Now().UTC()
+	loc, _ := time.LoadLocation("Asia/Taipei")
+	today := time.Now().In(loc)
 	avaliableStartTime := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.Local)
 	avaliableEndTime := avaliableStartTime.Add(29 * 24 * time.Hour)
 
