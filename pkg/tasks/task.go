@@ -39,10 +39,9 @@ func booking(c *services.Container, ctx context.Context) {
 
 	loc, _ := time.LoadLocation("Asia/Taipei")
 	today := time.Now().In(loc)
-	avaliableStartTime := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.Local)
-	avaliableEndTime := avaliableStartTime.Add(29 * 24 * time.Hour)
-
-	log.Printf("retrive orders which between %s and %s", avaliableStartTime, avaliableEndTime)
+	avaliableStartTime := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, loc)
+	avaliableEndTime := avaliableStartTime.Add(28 * 24 * time.Hour)
+	log.Printf("today is %s, retrive orders which between %s and %s", today, avaliableStartTime, avaliableEndTime)
 
 	orders, err := c.ORM.Order.Query().Where(order.StartTimeGTE(avaliableStartTime), order.StartTimeLT(avaliableEndTime), order.StatusEQ(models.OrderPending)).All(context.Background())
 	if err != nil {
