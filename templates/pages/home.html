@@ -8,35 +8,61 @@
 
 {{define "top-content"}}
 <section class="section mb-4">
-    <h1 class="text-2xl mb-4">Recent orders</h1>
-    {{- if not .Data}}
-    <div role="alert" class="alert shadow-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-info shrink-0 w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <div>
-            <h3 class="font-bold">You haven't order any ticket yet!</h3>
-        </div>
-        <a href='{{call .ToURL  "order"}}' class="btn btn-sm">Order</a>
-    </div>
-    {{end}}
+    <h1 class="text-2xl mb-4">Orders</h1>
 </section>
 {{end}}
 
 {{define "orders"}}
 <div id="orders">
-    {{- range .Data}}
-    {{ template "order" .}}
-    {{- end}}
 
-    <div class="flex justify-center">
-        <div class="join">
-            <button class="join-item btn" {{- if $.Pager.IsBeginning}} disabled {{- end}} hx-swap="outerHTML"
-                hx-get="/?page={{sub $.Pager.Page 1}}" hx-target="#orders">«</button>
-            <button class="join-item btn">Page {{$.Pager.Page}} / {{$.Pager.Pages}}</button>
-            <button class="join-item btn" {{- if $.Pager.IsEnd}} disabled {{- end}} hx-swap="outerHTML"
-                hx-get="/?page={{add $.Pager.Page 1}}" hx-target="#orders">»</button>
+    <div role="tablist" class="tabs tabs-lifted mb-3">
+        <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Pending" checked />
+        <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+            {{- range .Data.PendingOrders}}
+            {{ template "order" .}}
+            {{- end}}
+            {{- if not .Data.PendingOrders}}
+            <div role="alert" class="alert shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    class="stroke-info shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h3 class="font-bold">You haven't order any ticket yet!</h3>
+                </div>
+                <a href='{{call .ToURL  "order"}}' class="btn btn-sm">Order</a>
+            </div>
+            {{- else}}
+            <div class="flex justify-center">
+                <div class="join">
+                    <button class="join-item btn" {{- if $.Pager.IsBeginning}} disabled {{- end}} hx-swap="outerHTML"
+                        hx-get="/?page={{sub $.Pager.Page 1}}" hx-target="#orders">«</button>
+                    <button class="join-item btn">Page {{$.Pager.Page}} / {{$.Pager.Pages}}</button>
+                    <button class="join-item btn" {{- if $.Pager.IsEnd}} disabled {{- end}} hx-swap="outerHTML"
+                        hx-get="/?page={{add $.Pager.Page 1}}" hx-target="#orders">»</button>
+                </div>
+            </div>
+            {{end}}
+        </div>
+
+        <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Completes" />
+        <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+            {{- range .Data.CompleteOrders}}
+            {{ template "order" .}}
+            {{- end}}
+            {{- if not .Data.CompleteOrders}}
+            <div role="alert" class="alert shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    class="stroke-info shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h3 class="font-bold">No complete orders to show!</h3>
+                </div>
+            </div>
+            {{end}}
         </div>
     </div>
 </div>

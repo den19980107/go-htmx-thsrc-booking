@@ -82,31 +82,37 @@ func (c *orderController) Get(ctx echo.Context) error {
 func (c *orderController) GetValidate(ctx echo.Context) error {
 	validateId, err := strconv.Atoi(ctx.Param("validateId"))
 	if err != nil {
-		return c.Fail(err, "validate id format not correct")
+		msg.Warning(ctx, "validate id format not correct!")
+		return c.Redirect(ctx, "home")
 	}
 
 	currentUser, err := c.Container.Auth.GetAuthenticatedUser(ctx)
 	if err != nil {
+		msg.Warning(ctx, "you have not login yet!")
 		return c.Redirect(ctx, "login")
 	}
 
 	orderValidation, err := c.Container.ORM.OrderValidation.Query().Where(ordervalidation.ID(validateId)).Only(ctx.Request().Context())
 	if err != nil {
-		return c.Fail(err, "validate id not found")
+		msg.Warning(ctx, "validate id not found!")
+		return c.Redirect(ctx, "home")
 	}
 
 	order, err := orderValidation.QueryOrder().Only(ctx.Request().Context())
 	if err != nil {
-		return c.Fail(err, "validate order not found")
+		msg.Warning(ctx, "validate order not found!")
+		return c.Redirect(ctx, "home")
 	}
 
 	orderUser, err := order.QueryUser().Only(ctx.Request().Context())
 	if err != nil {
-		return c.Fail(err, "order user not found")
+		msg.Warning(ctx, "order's user not found!")
+		return c.Redirect(ctx, "home")
 	}
 
 	if orderUser.ID != currentUser.ID {
-		return c.Fail(err, "order is not belongs to you")
+		msg.Warning(ctx, "order is not blongs to you!")
+		return c.Redirect(ctx, "home")
 	}
 
 	page := controller.NewPage(ctx)
