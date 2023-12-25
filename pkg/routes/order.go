@@ -34,6 +34,7 @@ type (
 		IdNumber         string `form:"id-number" validate:"required"`
 		PhoneNumber      string `form:"phone-number" validate:"required"`
 		Email            string `form:"email" validate:"required,email"`
+		Amount           int8   `form:"amount" validate:"required,max=5,min=1"`
 		Submission       controller.FormSubmission
 	}
 
@@ -184,6 +185,7 @@ func (c *orderController) Post(ctx echo.Context) error {
 		SetArrivalStation(form.ArrivalStation).
 		SetDepartureStation(form.DepartureStation).
 		SetIDNumber(form.IdNumber).
+		SetAmount(form.Amount).
 		SetErrorMessage("").
 		Save(ctx.Request().Context())
 

@@ -19,6 +19,7 @@ var (
 		{Name: "phone_number", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString},
 		{Name: "status", Type: field.TypeString, Default: "pending"},
+		{Name: "amount", Type: field.TypeInt8, Default: 1},
 		{Name: "error_message", Type: field.TypeString, Default: ""},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "order_user", Type: field.TypeInt},
@@ -31,7 +32,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "orders_users_user",
-				Columns:    []*schema.Column{OrdersColumns[11]},
+				Columns:    []*schema.Column{OrdersColumns[12]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

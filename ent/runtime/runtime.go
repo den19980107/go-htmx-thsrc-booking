@@ -44,12 +44,18 @@ func init() {
 	order.DefaultStatus = orderDescStatus.Default.(string)
 	// order.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	order.StatusValidator = orderDescStatus.Validators[0].(func(string) error)
+	// orderDescAmount is the schema descriptor for amount field.
+	orderDescAmount := orderFields[8].Descriptor()
+	// order.DefaultAmount holds the default value on creation for the amount field.
+	order.DefaultAmount = orderDescAmount.Default.(int8)
+	// order.AmountValidator is a validator for the "amount" field. It is called by the builders before save.
+	order.AmountValidator = orderDescAmount.Validators[0].(func(int8) error)
 	// orderDescErrorMessage is the schema descriptor for error_message field.
-	orderDescErrorMessage := orderFields[8].Descriptor()
+	orderDescErrorMessage := orderFields[9].Descriptor()
 	// order.DefaultErrorMessage holds the default value on creation for the error_message field.
 	order.DefaultErrorMessage = orderDescErrorMessage.Default.(string)
 	// orderDescCreatedAt is the schema descriptor for created_at field.
-	orderDescCreatedAt := orderFields[9].Descriptor()
+	orderDescCreatedAt := orderFields[10].Descriptor()
 	// order.DefaultCreatedAt holds the default value on creation for the created_at field.
 	order.DefaultCreatedAt = orderDescCreatedAt.Default.(func() time.Time)
 	ordervalidationFields := schema.OrderValidation{}.Fields()

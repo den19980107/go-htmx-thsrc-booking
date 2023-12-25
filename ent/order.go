@@ -34,6 +34,8 @@ type Order struct {
 	Email string `json:"email,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
+	// Amount holds the value of the "amount" field.
+	Amount int8 `json:"amount,omitempty"`
 	// ErrorMessage holds the value of the "error_message" field.
 	ErrorMessage string `json:"error_message,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -83,7 +85,7 @@ func (*Order) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case order.FieldID:
+		case order.FieldID, order.FieldAmount:
 			values[i] = new(sql.NullInt64)
 		case order.FieldDepartureStation, order.FieldArrivalStation, order.FieldIDNumber, order.FieldPhoneNumber, order.FieldEmail, order.FieldStatus, order.FieldErrorMessage:
 			values[i] = new(sql.NullString)
@@ -159,6 +161,12 @@ func (o *Order) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				o.Status = value.String
+			}
+		case order.FieldAmount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field amount", values[i])
+			} else if value.Valid {
+				o.Amount = int8(value.Int64)
 			}
 		case order.FieldErrorMessage:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -248,6 +256,9 @@ func (o *Order) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(o.Status)
+	builder.WriteString(", ")
+	builder.WriteString("amount=")
+	builder.WriteString(fmt.Sprintf("%v", o.Amount))
 	builder.WriteString(", ")
 	builder.WriteString("error_message=")
 	builder.WriteString(o.ErrorMessage)

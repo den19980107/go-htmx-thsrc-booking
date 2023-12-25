@@ -78,6 +78,20 @@ func (oc *OrderCreate) SetNillableStatus(s *string) *OrderCreate {
 	return oc
 }
 
+// SetAmount sets the "amount" field.
+func (oc *OrderCreate) SetAmount(i int8) *OrderCreate {
+	oc.mutation.SetAmount(i)
+	return oc
+}
+
+// SetNillableAmount sets the "amount" field if the given value is not nil.
+func (oc *OrderCreate) SetNillableAmount(i *int8) *OrderCreate {
+	if i != nil {
+		oc.SetAmount(*i)
+	}
+	return oc
+}
+
 // SetErrorMessage sets the "error_message" field.
 func (oc *OrderCreate) SetErrorMessage(s string) *OrderCreate {
 	oc.mutation.SetErrorMessage(s)
@@ -171,6 +185,10 @@ func (oc *OrderCreate) defaults() {
 		v := order.DefaultStatus
 		oc.mutation.SetStatus(v)
 	}
+	if _, ok := oc.mutation.Amount(); !ok {
+		v := order.DefaultAmount
+		oc.mutation.SetAmount(v)
+	}
 	if _, ok := oc.mutation.ErrorMessage(); !ok {
 		v := order.DefaultErrorMessage
 		oc.mutation.SetErrorMessage(v)
@@ -235,6 +253,14 @@ func (oc *OrderCreate) check() error {
 	if v, ok := oc.mutation.Status(); ok {
 		if err := order.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Order.status": %w`, err)}
+		}
+	}
+	if _, ok := oc.mutation.Amount(); !ok {
+		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "Order.amount"`)}
+	}
+	if v, ok := oc.mutation.Amount(); ok {
+		if err := order.AmountValidator(v); err != nil {
+			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Order.amount": %w`, err)}
 		}
 	}
 	if _, ok := oc.mutation.ErrorMessage(); !ok {
@@ -303,6 +329,10 @@ func (oc *OrderCreate) createSpec() (*Order, *sqlgraph.CreateSpec) {
 	if value, ok := oc.mutation.Status(); ok {
 		_spec.SetField(order.FieldStatus, field.TypeString, value)
 		_node.Status = value
+	}
+	if value, ok := oc.mutation.Amount(); ok {
+		_spec.SetField(order.FieldAmount, field.TypeInt8, value)
+		_node.Amount = value
 	}
 	if value, ok := oc.mutation.ErrorMessage(); ok {
 		_spec.SetField(order.FieldErrorMessage, field.TypeString, value)

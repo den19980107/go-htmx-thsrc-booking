@@ -133,7 +133,7 @@ func (c *Crawler) submitForm(order ent.Order, captchaResult string, jsessionId s
 		ToTimeInputField:              order.StartTime.Format("2006/01/02"),
 		BackTimeInputField:            order.EndTime.Format("2006/01/02"),
 		ToTimeTable:                   toTimeTable,
-		TicketPanelRows0TicketAmount:  "1F",
+		TicketPanelRows0TicketAmount:  fmt.Sprintf("%dF", order.Amount),
 		TicketPanelRows1TicketAmount:  "0H",
 		TicketPannelRows2TicketAmount: "0W",
 		TicketPanelRows3TicketAmount:  "0E",

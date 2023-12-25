@@ -47,6 +47,8 @@ type OrderMutation struct {
 	phone_number      *string
 	email             *string
 	status            *string
+	amount            *int8
+	addamount         *int8
 	error_message     *string
 	created_at        *time.Time
 	clearedFields     map[string]struct{}
@@ -446,6 +448,62 @@ func (m *OrderMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetAmount sets the "amount" field.
+func (m *OrderMutation) SetAmount(i int8) {
+	m.amount = &i
+	m.addamount = nil
+}
+
+// Amount returns the value of the "amount" field in the mutation.
+func (m *OrderMutation) Amount() (r int8, exists bool) {
+	v := m.amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAmount returns the old "amount" field's value of the Order entity.
+// If the Order object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderMutation) OldAmount(ctx context.Context) (v int8, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAmount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAmount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAmount: %w", err)
+	}
+	return oldValue.Amount, nil
+}
+
+// AddAmount adds i to the "amount" field.
+func (m *OrderMutation) AddAmount(i int8) {
+	if m.addamount != nil {
+		*m.addamount += i
+	} else {
+		m.addamount = &i
+	}
+}
+
+// AddedAmount returns the value that was added to the "amount" field in this mutation.
+func (m *OrderMutation) AddedAmount() (r int8, exists bool) {
+	v := m.addamount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAmount resets all changes to the "amount" field.
+func (m *OrderMutation) ResetAmount() {
+	m.amount = nil
+	m.addamount = nil
+}
+
 // SetErrorMessage sets the "error_message" field.
 func (m *OrderMutation) SetErrorMessage(s string) {
 	m.error_message = &s
@@ -645,7 +703,7 @@ func (m *OrderMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrderMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.start_time != nil {
 		fields = append(fields, order.FieldStartTime)
 	}
@@ -669,6 +727,9 @@ func (m *OrderMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, order.FieldStatus)
+	}
+	if m.amount != nil {
+		fields = append(fields, order.FieldAmount)
 	}
 	if m.error_message != nil {
 		fields = append(fields, order.FieldErrorMessage)
@@ -700,6 +761,8 @@ func (m *OrderMutation) Field(name string) (ent.Value, bool) {
 		return m.Email()
 	case order.FieldStatus:
 		return m.Status()
+	case order.FieldAmount:
+		return m.Amount()
 	case order.FieldErrorMessage:
 		return m.ErrorMessage()
 	case order.FieldCreatedAt:
@@ -729,6 +792,8 @@ func (m *OrderMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldEmail(ctx)
 	case order.FieldStatus:
 		return m.OldStatus(ctx)
+	case order.FieldAmount:
+		return m.OldAmount(ctx)
 	case order.FieldErrorMessage:
 		return m.OldErrorMessage(ctx)
 	case order.FieldCreatedAt:
@@ -798,6 +863,13 @@ func (m *OrderMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
+	case order.FieldAmount:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAmount(v)
+		return nil
 	case order.FieldErrorMessage:
 		v, ok := value.(string)
 		if !ok {
@@ -819,13 +891,21 @@ func (m *OrderMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *OrderMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addamount != nil {
+		fields = append(fields, order.FieldAmount)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *OrderMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case order.FieldAmount:
+		return m.AddedAmount()
+	}
 	return nil, false
 }
 
@@ -834,6 +914,13 @@ func (m *OrderMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *OrderMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case order.FieldAmount:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAmount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Order numeric field %s", name)
 }
@@ -884,6 +971,9 @@ func (m *OrderMutation) ResetField(name string) error {
 		return nil
 	case order.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case order.FieldAmount:
+		m.ResetAmount()
 		return nil
 	case order.FieldErrorMessage:
 		m.ResetErrorMessage()

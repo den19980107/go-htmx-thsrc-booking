@@ -142,6 +142,27 @@ func (ou *OrderUpdate) SetNillableStatus(s *string) *OrderUpdate {
 	return ou
 }
 
+// SetAmount sets the "amount" field.
+func (ou *OrderUpdate) SetAmount(i int8) *OrderUpdate {
+	ou.mutation.ResetAmount()
+	ou.mutation.SetAmount(i)
+	return ou
+}
+
+// SetNillableAmount sets the "amount" field if the given value is not nil.
+func (ou *OrderUpdate) SetNillableAmount(i *int8) *OrderUpdate {
+	if i != nil {
+		ou.SetAmount(*i)
+	}
+	return ou
+}
+
+// AddAmount adds i to the "amount" field.
+func (ou *OrderUpdate) AddAmount(i int8) *OrderUpdate {
+	ou.mutation.AddAmount(i)
+	return ou
+}
+
 // SetErrorMessage sets the "error_message" field.
 func (ou *OrderUpdate) SetErrorMessage(s string) *OrderUpdate {
 	ou.mutation.SetErrorMessage(s)
@@ -273,6 +294,11 @@ func (ou *OrderUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Order.status": %w`, err)}
 		}
 	}
+	if v, ok := ou.mutation.Amount(); ok {
+		if err := order.AmountValidator(v); err != nil {
+			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Order.amount": %w`, err)}
+		}
+	}
 	if _, ok := ou.mutation.UserID(); ou.mutation.UserCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Order.user"`)
 	}
@@ -314,6 +340,12 @@ func (ou *OrderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ou.mutation.Status(); ok {
 		_spec.SetField(order.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := ou.mutation.Amount(); ok {
+		_spec.SetField(order.FieldAmount, field.TypeInt8, value)
+	}
+	if value, ok := ou.mutation.AddedAmount(); ok {
+		_spec.AddField(order.FieldAmount, field.TypeInt8, value)
 	}
 	if value, ok := ou.mutation.ErrorMessage(); ok {
 		_spec.SetField(order.FieldErrorMessage, field.TypeString, value)
@@ -524,6 +556,27 @@ func (ouo *OrderUpdateOne) SetNillableStatus(s *string) *OrderUpdateOne {
 	return ouo
 }
 
+// SetAmount sets the "amount" field.
+func (ouo *OrderUpdateOne) SetAmount(i int8) *OrderUpdateOne {
+	ouo.mutation.ResetAmount()
+	ouo.mutation.SetAmount(i)
+	return ouo
+}
+
+// SetNillableAmount sets the "amount" field if the given value is not nil.
+func (ouo *OrderUpdateOne) SetNillableAmount(i *int8) *OrderUpdateOne {
+	if i != nil {
+		ouo.SetAmount(*i)
+	}
+	return ouo
+}
+
+// AddAmount adds i to the "amount" field.
+func (ouo *OrderUpdateOne) AddAmount(i int8) *OrderUpdateOne {
+	ouo.mutation.AddAmount(i)
+	return ouo
+}
+
 // SetErrorMessage sets the "error_message" field.
 func (ouo *OrderUpdateOne) SetErrorMessage(s string) *OrderUpdateOne {
 	ouo.mutation.SetErrorMessage(s)
@@ -668,6 +721,11 @@ func (ouo *OrderUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Order.status": %w`, err)}
 		}
 	}
+	if v, ok := ouo.mutation.Amount(); ok {
+		if err := order.AmountValidator(v); err != nil {
+			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Order.amount": %w`, err)}
+		}
+	}
 	if _, ok := ouo.mutation.UserID(); ouo.mutation.UserCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Order.user"`)
 	}
@@ -726,6 +784,12 @@ func (ouo *OrderUpdateOne) sqlSave(ctx context.Context) (_node *Order, err error
 	}
 	if value, ok := ouo.mutation.Status(); ok {
 		_spec.SetField(order.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := ouo.mutation.Amount(); ok {
+		_spec.SetField(order.FieldAmount, field.TypeInt8, value)
+	}
+	if value, ok := ouo.mutation.AddedAmount(); ok {
+		_spec.AddField(order.FieldAmount, field.TypeInt8, value)
 	}
 	if value, ok := ouo.mutation.ErrorMessage(); ok {
 		_spec.SetField(order.FieldErrorMessage, field.TypeString, value)

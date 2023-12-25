@@ -95,6 +95,11 @@ func Status(v string) predicate.Order {
 	return predicate.Order(sql.FieldEQ(FieldStatus, v))
 }
 
+// Amount applies equality check predicate on the "amount" field. It's identical to AmountEQ.
+func Amount(v int8) predicate.Order {
+	return predicate.Order(sql.FieldEQ(FieldAmount, v))
+}
+
 // ErrorMessage applies equality check predicate on the "error_message" field. It's identical to ErrorMessageEQ.
 func ErrorMessage(v string) predicate.Order {
 	return predicate.Order(sql.FieldEQ(FieldErrorMessage, v))
@@ -573,6 +578,46 @@ func StatusEqualFold(v string) predicate.Order {
 // StatusContainsFold applies the ContainsFold predicate on the "status" field.
 func StatusContainsFold(v string) predicate.Order {
 	return predicate.Order(sql.FieldContainsFold(FieldStatus, v))
+}
+
+// AmountEQ applies the EQ predicate on the "amount" field.
+func AmountEQ(v int8) predicate.Order {
+	return predicate.Order(sql.FieldEQ(FieldAmount, v))
+}
+
+// AmountNEQ applies the NEQ predicate on the "amount" field.
+func AmountNEQ(v int8) predicate.Order {
+	return predicate.Order(sql.FieldNEQ(FieldAmount, v))
+}
+
+// AmountIn applies the In predicate on the "amount" field.
+func AmountIn(vs ...int8) predicate.Order {
+	return predicate.Order(sql.FieldIn(FieldAmount, vs...))
+}
+
+// AmountNotIn applies the NotIn predicate on the "amount" field.
+func AmountNotIn(vs ...int8) predicate.Order {
+	return predicate.Order(sql.FieldNotIn(FieldAmount, vs...))
+}
+
+// AmountGT applies the GT predicate on the "amount" field.
+func AmountGT(v int8) predicate.Order {
+	return predicate.Order(sql.FieldGT(FieldAmount, v))
+}
+
+// AmountGTE applies the GTE predicate on the "amount" field.
+func AmountGTE(v int8) predicate.Order {
+	return predicate.Order(sql.FieldGTE(FieldAmount, v))
+}
+
+// AmountLT applies the LT predicate on the "amount" field.
+func AmountLT(v int8) predicate.Order {
+	return predicate.Order(sql.FieldLT(FieldAmount, v))
+}
+
+// AmountLTE applies the LTE predicate on the "amount" field.
+func AmountLTE(v int8) predicate.Order {
+	return predicate.Order(sql.FieldLTE(FieldAmount, v))
 }
 
 // ErrorMessageEQ applies the EQ predicate on the "error_message" field.

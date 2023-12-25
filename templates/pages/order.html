@@ -51,6 +51,14 @@
         </div>
         <div class="mb-3">
             <label class="label">
+                <span class="label-text">Amount</span>
+            </label>
+            <input type="number" class="input input-bordered w-full" name="amount" value="{{ .Form.Amount }}" min=1
+                max=5 hx-target="next .error" />
+            {{template "field-errors" (.Form.Submission.GetFieldErrors "Amount")}}
+        </div>
+        <div class="mb-3">
+            <label class="label">
                 <span class="label-text">ID</span>
             </label>
             <input class="input input-bordered w-full" name="id-number" value="{{ .Form.IdNumber }}"
