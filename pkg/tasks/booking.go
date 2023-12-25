@@ -28,11 +28,7 @@ func Booking(ctx context.Context, c *services.Container, o *ent.Order) error {
 	imageBase64, jsessiongId, cookieStr, err := cw.GetCaptchaImageAndJsessionId(o.ID)
 
 	if err != nil {
-		_, err := tx.Order.Update().Where(order.ID(o.ID)).SetStatus(models.OrderFailed).Save(ctx)
-		if err != nil {
-			return fmt.Errorf("update order %d from processing to failed failed", o.ID)
-		}
-		return fmt.Errorf("order %d process failed, err: %s", o.ID, err)
+		return fmt.Errorf("order %d process failed, wait for next run, err: %s", o.ID, err)
 	}
 
 	orderValidation, err := tx.OrderValidation.Create().SetOrder(o).SetJessionID(jsessiongId).SetCaptchaImage(imageBase64).SetCookies(cookieStr).Save(ctx)
