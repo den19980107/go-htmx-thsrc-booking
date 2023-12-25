@@ -13,14 +13,14 @@ import (
 	cronV3 "github.com/robfig/cron/v3"
 )
 
-const EveryFiveMinuteSpec = "*/5 * * * *"
+const Hourly = "0 * * * *"
 
 func Run(c *services.Container) {
 	cron := cronV3.New()
 	cron.Start()
 
 	booking(c, context.Background())
-	cron.AddJob(EveryFiveMinuteSpec, cronV3.FuncJob(func() {
+	cron.AddJob(Hourly, cronV3.FuncJob(func() {
 		booking(c, context.Background())
 	}))
 }

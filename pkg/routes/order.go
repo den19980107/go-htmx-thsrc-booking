@@ -222,8 +222,8 @@ func (c *orderController) PostValidation(ctx echo.Context) error {
 
 	err = cw.CompleteOrder(*o, form.Captcha, form.JsessionId)
 	if err != nil {
-		_, err = o.Update().SetStatus(models.OrderFailed).SetErrorMessage(err.Error()).Save(ctx.Request().Context())
-		return c.Fail(err, "failed to complete order")
+		msg.Danger(ctx, fmt.Sprintf("failed to complete order, err: %s", err))
+		return c.Redirect(ctx, "home")
 	}
 
 	_, err = o.Update().SetStatus(models.OrderSuccess).Save(ctx.Request().Context())
